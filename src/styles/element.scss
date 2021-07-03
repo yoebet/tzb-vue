@@ -1,0 +1,7 @@
+$--color-primary: teal;
+
+$--font-path: '~element-plus/lib/theme-chalk/fonts';
+@import '~element-plus/packages/theme-chalk/src/base.scss';
+
+@import "~element-plus/packages/theme-chalk/src/checkbox";
+@import "~element-plus/packages/theme-chalk/src/date-picker";
