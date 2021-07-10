@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import Home from '../views/Home.vue'
 import TaskResultList from '../components/TaskResultList.vue'
+import EtlWflowRunList from '../components/EtlWflowRunList.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -10,8 +11,13 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/task-results',
-    name: 'Task Results',
+    name: 'TaskResults',
     component: TaskResultList
+  },
+  {
+    path: '/wflow-runs',
+    name: 'WflowRuns',
+    component: EtlWflowRunList
   }
 ]
 

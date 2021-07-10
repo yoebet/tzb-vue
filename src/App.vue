@@ -1,7 +1,8 @@
 <template>
   <div id="nav">
     <router-link to="/">Home</router-link> |
-    <router-link to="/task-results">Task Result List</router-link>
+    <router-link to="/task-results">Task Result</router-link> |
+    <router-link to="/wflow-runs">Flow</router-link>
   </div>
   <router-view/>
 </template>
