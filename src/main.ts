@@ -1,5 +1,8 @@
 import {createApp} from 'vue'
-import {locale, ElDatePicker, ElCheckbox, ElTable, ElTableColumn, ElPagination} from 'element-plus'
+import {
+  locale, ElDatePicker, ElCheckbox, ElTable, ElTableColumn, ElPagination,
+  ElInput, ElForm, ElFormItem, ElButton, ElLoading
+} from 'element-plus'
 import lang from 'element-plus/lib/locale/lang/zh-cn'
 import 'dayjs/locale/zh-cn'
 import App from './App.vue'
@@ -15,5 +18,10 @@ createApp(App)
   .use(ElCheckbox)
   .use(ElTable)
   .use(ElTableColumn)
-  .use(ElPagination, {locale})
+  .use(ElPagination)
+  .use(ElInput)
+  .use(ElForm)
+  .use(ElFormItem)
+  .use(ElButton)
+  .use(ElLoading)
   .mount('#app')

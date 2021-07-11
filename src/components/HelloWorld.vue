@@ -43,17 +43,17 @@ export default class HelloWorld extends Vue {
   }
 
   shortcuts = [{
-    text: 'Today',
+    text: '今天',
     value: new Date(),
   }, {
-    text: 'Yesterday',
+    text: '昨天',
     value: (() => {
       const date = new Date()
       date.setTime(date.getTime() - 3600 * 1000 * 24)
       return date
     })(),
   }, {
-    text: 'A week ago',
+    text: '一周前',
     value: (() => {
       const date = new Date()
       date.setTime(date.getTime() - 3600 * 1000 * 24 * 7)
