@@ -1,4 +1,4 @@
-const DefaultPageSize = 20
+const DefaultPageSize = 10
 const DateFormat = 'YYYY-MM-DD'
 const DateTimeFormat = 'YYYY-MM-DD HH:mm:ss'
 

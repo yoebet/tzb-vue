@@ -46,10 +46,10 @@
         prop="workflowName"
         label="流程名称">
     </el-table-column>
-    <el-table-column
-        prop="accountTypeName"
-        label="账期">
-    </el-table-column>
+    <!--    <el-table-column
+            prop="accountTypeName"
+            label="账期">
+        </el-table-column>-->
     <el-table-column
         prop="runTypeName"
         label="启动方式">
@@ -70,10 +70,47 @@
     <el-table-column
         prop="runStatusName"
         label="运行状态">
+      <template #default="scope">
+        <span :class="'run-status-'+scope.row.runStatusCode">{{ scope.row.runStatusName }}</span>
+      </template>
     </el-table-column>
     <el-table-column
+        align="right"
         prop="tableCount"
         label="表数">
+    </el-table-column>
+    <el-table-column
+        align="right"
+        prop="ruleCount"
+        label="全部规则">
+      <template #default="scope">
+        <template v-if="scope.row.ruleCount>0">
+          <span class="fail-count">{{ scope.row.ruleFailCount }}</span> /
+        </template>
+        <span class="total-count">{{ scope.row.ruleCount }}</span>
+      </template>
+    </el-table-column>
+    <el-table-column
+        align="right"
+        prop="stdRuleCount"
+        label="标准字段规则">
+      <template #default="scope">
+        <template v-if="scope.row.stdRuleFailCount>0">
+          <span class="fail-count">{{ scope.row.stdRuleCount }}</span> /
+        </template>
+        <span class="total-count">{{ scope.row.stdRuleFailCount }}</span>
+      </template>
+    </el-table-column>
+    <el-table-column
+        align="right"
+        prop="xRuleCount"
+        label="跨系统校验规则">
+      <template #default="scope">
+        <template v-if="scope.row.xRuleFailCount>0">
+          <span class="fail-count">{{ scope.row.xRuleCount }}</span> /
+        </template>
+        <span class="total-count">{{ scope.row.xRuleFailCount }}</span>
+      </template>
     </el-table-column>
   </el-table>
 
@@ -93,26 +130,40 @@
 <script lang="ts">
 import {Vue} from "vue-class-component";
 import {Page} from "@/api/page";
-import {getEtlWflowRuns} from "@/api/etl-wflow-run-api";
+import {getWflowRunStats} from "@/api/etl-wflow-run-api";
 import {EtlWflowRun, EtlWflowRunCodes, EtlWflowRunFilter} from "@/models/etl-wflow-run";
 import moment from 'moment';
-import {DateTimeFormat, DateFormat, DateShortcuts} from "@/config";
+import {DateFormat, DateShortcuts, DateTimeFormat} from "@/config";
 import {timeElapseLabel} from "@/helper";
+import {DmcAuditWflowStat} from "@/models/dmc-audit-wflow-stat";
 
-export default class EtlWflowRunList extends Vue {
+
+export default class WflowRunStatList extends Vue {
   dateFormat = DateFormat
-  tableData0: EtlWflowRun[] = []
+  tableData0: DmcAuditWflowStat[] = []
   tableDataLoading = false
   filter: EtlWflowRunFilter = new EtlWflowRunFilter()
-  page: Page<EtlWflowRun> = {
+  page: Page<DmcAuditWflowStat> = {
     totalElements: 0,
     content: []
   }
 
   dateShortcuts = DateShortcuts
 
-  set tableData(value: EtlWflowRun[]) {
-    value.forEach(wf => {
+  set tableData(value: DmcAuditWflowStat[]) {
+    const hop = Object.prototype.hasOwnProperty
+    this.tableData0 = value.map(wf0 => {
+      const wf = wf0 as DmcAuditWflowStat & EtlWflowRun
+      const run = wf.wflowRun
+      if (run) {
+        for (const key in run) {
+          if (!hop.call(run, key)) {
+            continue
+          }
+          wf[key] = run[key]
+        }
+      }
+
       wf.accountTypeName = EtlWflowRunCodes.AccountTypeNames['s' + wf.accountType]
       wf.runTypeName = EtlWflowRunCodes.RunTypeNames['s' + wf.runType]
       wf.runStatusName = EtlWflowRunCodes.RunStatusNames['s' + wf.runStatusCode]
@@ -122,12 +173,13 @@ export default class EtlWflowRunList extends Vue {
         wf.startTimeLabel = st.format(DateTimeFormat)
       }
       wf.timeElapse = timeElapseLabel(wf.startTime, wf.endTime)
+
+      return wf
     })
-    this.tableData0 = value
     this.tableDataLoading = false
   }
 
-  get tableData(): EtlWflowRun[] {
+  get tableData(): DmcAuditWflowStat[] {
     return this.tableData0
   }
 
@@ -136,14 +188,14 @@ export default class EtlWflowRunList extends Vue {
   }
 
   async created(): Promise<void> {
-    // this.filter.pageSize = 2
+    this.filter.pageSize = 2
     // this.filter.workflowName = 'eas'
     await this.fetchData()
   }
 
   async fetchData(): Promise<void> {
     this.tableDataLoading = true
-    this.page = await getEtlWflowRuns(this.filter)
+    this.page = await getWflowRunStats(this.filter)
     if (this.page && this.page.content) {
       this.tableData = this.page.content
     } else {
@@ -188,6 +240,22 @@ export default class EtlWflowRunList extends Vue {
 
 .el-icon-close {
   cursor: pointer;
+}
+
+.run-status-8 {
+  color: rgba(255, 0, 0, 0.7);
+}
+
+.run-status-9 {
+  color: green;
+}
+
+.fail-count {
+  color: rgba(255, 0, 0, 0.7);
+}
+
+.total-count {
+  font-weight: bold;
 }
 
 </style>

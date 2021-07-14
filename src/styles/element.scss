@@ -1,4 +1,6 @@
-$--color-primary: teal;
+// theme-chalk default: #409EFF
+$--color-primary: #108ee9;
+// menu background: rgb(41, 58, 84)
 
 $--font-path: '~element-plus/lib/theme-chalk/fonts';
 @import '~element-plus/packages/theme-chalk/src/base.scss';

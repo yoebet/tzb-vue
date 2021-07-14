@@ -2,7 +2,8 @@
   <div id="nav">
     <router-link to="/">Home</router-link> |
     <router-link to="/task-results">Task Result</router-link> |
-    <router-link to="/wflow-runs">Flow</router-link>
+<!--    <router-link to="/wflow-runs">Flow</router-link> |-->
+    <router-link to="/wflow-stats">Stat</router-link>
   </div>
   <router-view/>
 </template>

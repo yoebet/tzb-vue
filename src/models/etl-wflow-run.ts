@@ -1,10 +1,15 @@
 import {Pager} from "@/models/pager";
 import {Model} from "@/models/model";
+import {DmcAuditNodeCurr} from "@/models/dmc-audit-node-curr";
 
 export interface EtlWflowRun extends Model {
 
+  auditNodes?: DmcAuditNodeCurr[]
+
+  auditNodesCount: number
+
   // 流程运行ID(=WORKFLOW_RUN_KEY)
-  oid: string
+  // oid: string
 
   // 流程定义ID
   workflowKey: string
@@ -32,12 +37,28 @@ export interface EtlWflowRun extends Model {
   runErrMsg: string
 
   // 流程运行状态编码
+  // 0，待触发状态；
+  // 1，准备状态；
+  // 2，运行状态；
+  // 3，等待状态；
+  // 4，正在暂停状态；
+  // 5，暂停状态；
+  // 6，正在终止状态；
+  // 7，警告状态；
+  // 8，失败状态；
+  // 9，成功状态；
+  // 10，终止状态；
+  // 11，忽略状态；
   runStatusCode: number
+
+  runStatusName?: string
 
   userName: string
 
-  // 2代表调度启动
+  // 实例启动类型（1代表手动启动，2代表调度启动，3代表子流程，4代表事件触发）
   runType: number
+
+  runTypeName?: string
 
   codepageId: number
 
@@ -62,7 +83,7 @@ export interface EtlWflowRun extends Model {
 
   startType: number
 
-  // 是否单例
+  // 是否单例(现在都为单例，默认为1)
   isSingleton: number
 
   singletoOption: string
@@ -81,7 +102,7 @@ export interface EtlWflowRun extends Model {
   // 流程实例名称
   wfInstName: string
 
-  // 是否上线
+  // 是否上线（1代表流程已发布，0代表未发布）
   isOnline: number
 
   // 流程进度值
@@ -96,11 +117,47 @@ export interface EtlWflowRun extends Model {
   // 账期类型，0其他，1日，2月
   accountType: string
 
+  accountTypeName?: string
+
 }
+
+export class EtlWflowRunCodes {
+  static RunStatusNames: Record<string, string> = {
+    s0: '待触发',
+    s1: '准备',
+    s2: '运行',
+    s3: '等待',
+    s4: '正在暂停',
+    s5: '暂停',
+    s6: '正在终止',
+    s7: '警告',
+    s8: '失败',
+    s9: '成功',
+    s10: '终止',
+    s11: '忽略'
+  }
+
+  static RunTypeNames: Record<string, string> = {
+    s1: '手动',
+    s2: '调度',
+    s3: '子流程',
+    s4: '事件触发',
+  }
+
+  static AccountTypeNames: Record<string, string> = {
+    s0: '其他',
+    s1: '日',
+    s2: '月',
+  }
+}
+
 
 export class EtlWflowRunFilter extends Pager {
   workflowName?: string
 
   startDateFrom?: string
   startDateTo?: string
+
+  auditNodes?: boolean
 }
+
