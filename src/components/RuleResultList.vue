@@ -1,43 +1,58 @@
 <template>
-  <el-form :inline="true" class="filter-form">
-    <el-form-item label="规则">
-      <el-switch v-model="filter.showAllRules" active-text="显示全部" @change="filterChange"></el-switch>
-    </el-form-item>
-    <!--    <el-form-item label="流程名称">
-          <el-input v-model="filter.workflowName" placeholder="流程名称">
-            <template #suffix>
-              <i class="el-input__icon el-icon-close" @click="filter.workflowName=''" v-if="filter.workflowName"></i>
-            </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="fetchData">筛选</el-button>
-        </el-form-item>-->
-  </el-form>
+  <div class="flex-bar">
+    <el-form :inline="true" class="filter-form">
+      <el-form-item label="规则显示">
+        <el-radio-group v-model="showAllRules" @change="filterChange">
+          <el-radio :label="true">全部规则</el-radio>
+          <el-radio :label="false">仅错误规则</el-radio>
+        </el-radio-group>
+      </el-form-item>
+      <el-form-item label="规则分组">
+        <el-radio-group v-model="groupType" @change="filterChange">
+          <el-radio label="ds">数据源</el-radio>
+          <el-radio label="ds-table">数据源-表</el-radio>
+        </el-radio-group>
+      </el-form-item>
+    </el-form>
+    <div class="spacer"></div>
+    <div>
+      <el-button type="text" @click="collapseNames=[]">
+        <i class="el-icon-caret-top"></i>
+        全部收起
+      </el-button>
+    </div>
+  </div>
 
   <!--  <el-divider></el-divider>-->
 
-  <el-collapse v-model="collapseName" :accordion="false" class="rules-accordions">
-    <el-collapse-item name="srcDataRules">
+  <el-collapse v-model="collapseNames" :accordion="false" class="rules-accordions">
+    <el-collapse-item :name="'s-'+group.code" v-for="group in sGroups" :key="group.code">
       <template #title>
         <div class="accordion-title">
-          源头稽核
-          &nbsp;（<span class="rules-count">{{ sTableData.length }}</span>）
+          源头稽核：
+          <span class="collapse-group-name">{{ group.name }}</span>
+          &nbsp;（<span class="rules-count">{{ group.tableData.length }}</span>）
         </div>
       </template>
+      <el-table-column
+          type="index"
+          align="right"
+          label="#">
+      </el-table-column>
       <el-table
-          :data="sTableData"
+          :data="group.tableData"
           style="width: 100%">
-        <el-table-column
-            sortable
-            prop="tab.dbResourceName"
-            class-name="ds-name"
-            label="数据源">
-        </el-table-column>
+        <!--        <el-table-column
+                    sortable
+                    prop="tab.dbResourceName"
+                    class-name="ds-name"
+                    label="数据源">
+                </el-table-column>-->
         <el-table-column
             sortable
             prop="tab.tabName"
             class-name="tab-name"
+            v-if="groupType!=='ds-table'"
             label="表名">
         </el-table-column>
         <el-table-column
@@ -82,26 +97,32 @@
       </el-table>
     </el-collapse-item>
 
-    <el-collapse-item :name="'x-'+xRuleGroup.dsCode" v-for="xRuleGroup in xds" :key="xRuleGroup.dsCode">
+    <el-collapse-item :name="'x-'+group.code" v-for="group in xGroups" :key="group.code">
       <template #title>
         <div class="accordion-title">跨系统校验：
-          <span class="collapse-group-name">{{ xRuleGroup.dsName }}</span>
-          &nbsp;（<span class="rules-count">{{ xRuleGroup.tableData.length }}</span>）
+          <span class="collapse-group-name">{{ group.name }}</span>
+          &nbsp;（<span class="rules-count">{{ group.tableData.length }}</span>）
         </div>
       </template>
       <el-table
-          :data="xRuleGroup.tableData"
+          :data="group.tableData"
           style="width: 100%">
         <el-table-column
-            sortable
-            prop="tab.dbResourceName"
-            class-name="ds-name"
-            label="数据源">
+            type="index"
+            align="right"
+            label="#">
         </el-table-column>
+        <!--        <el-table-column
+                    sortable
+                    prop="tab.dbResourceName"
+                    class-name="ds-name"
+                    label="数据源">
+                </el-table-column>-->
         <el-table-column
             sortable
             prop="tab.tabName"
             class-name="tab-name"
+            v-if="groupType!=='ds-table'"
             label="表名">
         </el-table-column>
         <el-table-column
@@ -136,34 +157,59 @@ import {getAuditRuleResults} from "@/api/etl-wflow-run-api";
 import {DmcAuditRuleResult, DmcAuditRuleResultCodes as Codes} from "@/models/dmc-audit-rule-result";
 
 interface CollapseGroup {
-  dsCode: string,
-  dsName: string,
+  code: string,
+  name: string,
   tableData: DmcAuditRuleResult[]
 }
 
 export default class RuleResultList extends Vue {
   allRuleData: DmcAuditRuleResult[] | null = null
   errorRuleData: DmcAuditRuleResult[] | null = null
-  sTableData: DmcAuditRuleResult[] = []
-  xds: CollapseGroup[] = []
+  showAllRules = false
+  groupType: 'ds' | 'ds-table' = 'ds'
+  sGroups: CollapseGroup[] = []
+  xGroups: CollapseGroup[] = []
+
   tableDataLoading = false
   private runOid = ''
-  private collapseName: string[] = []
+  private collapseNames: string[] | null = null
   private resdResultStatus = -2
-  private filter: any = {}
+
+
+  groupRules(ruleResults: DmcAuditRuleResult[],
+             collapseNamePrefix: string,
+             pushCollapseName: boolean): CollapseGroup[] {
+
+    const groupsMap = new Map<string, DmcAuditRuleResult[]>()
+    for (const rr of ruleResults) {
+      const code = this.groupType === 'ds-table' ? rr.tab.tabCode : rr.tab.dbResourceCode
+      let list = groupsMap.get(code)
+      if (!list) {
+        list = []
+        groupsMap.set(code, list)
+      }
+      list.push(rr)
+    }
+
+    const groups: CollapseGroup[] = []
+    for (const [code, list] of Array.from(groupsMap)) {
+      const tab = list[0].tab
+      const dsName = tab.dbResourceName
+      const name = this.groupType === 'ds-table' ? `${dsName} - ${tab.tabName}` : dsName
+      groups.push({code, name, tableData: list})
+
+      if (pushCollapseName && this.collapseNames) {
+        this.collapseNames.push(collapseNamePrefix + code)
+      }
+    }
+
+    return groups
+  }
 
   set tableData(value: DmcAuditRuleResult[]) {
     const sTableData: DmcAuditRuleResult[] = []
     const xTableData: DmcAuditRuleResult[] = []
     value.forEach(wf => {
-
-      wf.resdResultStatusName = Codes.ResultStatusNames['s' + wf.resdResultStatus]
-      wf.resdExecStatusName = Codes.ExecStatusNames['s' + wf.resdExecStatus]
-      wf.resdResultName = wf.resdResultStatusName
-      if (!wf.resdResultName && wf.resdExecStatus === 4) {
-        wf.resdResultName = '执行错误'
-      }
-
       if (wf.xsRule) {
         xTableData.push(wf)
       } else {
@@ -171,43 +217,18 @@ export default class RuleResultList extends Vue {
       }
     })
 
-    this.collapseName = []
-    if (sTableData.length > 0) {
-      this.collapseName.push('srcDataRules')
+    const pushCollapseName = this.collapseNames === null
+    if (pushCollapseName) {
+      this.collapseNames = []
     }
-    // if (xTableData.length > 0) {
-    //   this.collapseName.push('xDataRules')
-    // }
-    this.sTableData = sTableData
-    // this.xTableData = xTableData
-
-
-    const xdsMap = new Map<string, DmcAuditRuleResult[]>()
-    for (const rr of xTableData) {
-      const dsCode = rr.tab.dbResourceCode
-      // const dsCode = rr.tab.tabCode
-      let list = xdsMap.get(dsCode)
-      if (!list) {
-        list = []
-        xdsMap.set(dsCode, list)
-      }
-      list.push(rr)
-    }
-
-    this.xds = []
-    for (const [dsCode, list] of Array.from(xdsMap)) {
-      const dsName = list[0].tab.dbResourceName
-      // const dsName = list[0].tab.tabName
-      this.xds.push({dsCode, dsName, tableData: list})
-
-      this.collapseName.push('x-' + dsCode)
-    }
+    this.sGroups = this.groupRules(sTableData, 's-', pushCollapseName)
+    this.xGroups = this.groupRules(xTableData, 'x-', pushCollapseName)
 
     this.tableDataLoading = false
   }
 
   get tableData(): DmcAuditRuleResult[] {
-    return this.sTableData
+    return []
   }
 
   async created(): Promise<void> {
@@ -223,7 +244,7 @@ export default class RuleResultList extends Vue {
     }
     this.tableDataLoading = true
     let list: DmcAuditRuleResult[]
-    if (this.filter.showAllRules) {
+    if (this.showAllRules) {
       list = await getAuditRuleResults(this.runOid, null)
       this.allRuleData = list
     } else {
@@ -231,6 +252,14 @@ export default class RuleResultList extends Vue {
       this.errorRuleData = list
     }
     if (list) {
+      list.map(wf => {
+        wf.resdResultStatusName = Codes.ResultStatusNames['s' + wf.resdResultStatus]
+        wf.resdExecStatusName = Codes.ExecStatusNames['s' + wf.resdExecStatus]
+        wf.resdResultName = wf.resdResultStatusName
+        if (!wf.resdResultName && wf.resdExecStatus === 4) {
+          wf.resdResultName = '执行错误'
+        }
+      })
       this.tableData = list
     } else {
       this.tableDataLoading = false
@@ -238,7 +267,7 @@ export default class RuleResultList extends Vue {
   }
 
   async filterChange(vv: any): Promise<void> {
-    const showAll = this.filter.showAllRules
+    const showAll = this.showAllRules
     if (showAll) {
       if (this.allRuleData) {
         this.tableData = this.allRuleData
@@ -262,6 +291,23 @@ export default class RuleResultList extends Vue {
 </script>
 
 <style lang="scss" scoped>
+
+.el-radio {
+  margin-right: 15px;
+}
+
+.flex-bar {
+  display: flex;
+  padding-right: 8px;
+}
+
+.spacer {
+  flex: auto;
+}
+
+.el-form-item:not(:first-child) {
+  margin-left: 30px;
+}
 
 .rules-accordions {
   //margin-left: 50px;
