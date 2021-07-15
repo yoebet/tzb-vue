@@ -112,6 +112,15 @@
         <span class="total-count">{{ scope.row.xRuleFailCount }}</span>
       </template>
     </el-table-column>
+    <el-table-column
+        align="right"
+        label="操作">
+      <template #default="scope">
+        <router-link :to="'/wflow-rules/'+scope.row.wflowRunOid">
+          <el-button type="primary" @click="fetchData">执行详情</el-button>
+        </router-link>
+      </template>
+    </el-table-column>
   </el-table>
 
   <div class="pagination">

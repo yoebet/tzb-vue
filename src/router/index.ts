@@ -3,6 +3,7 @@ import Home from '../views/Home.vue'
 import TaskResultList from '../components/TaskResultList.vue'
 import EtlWflowRunList from '../components/EtlWflowRunList.vue'
 import WflowRunStatList from '../components/WflowRunStatList.vue'
+import RuleResultList from '../components/RuleResultList.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -24,6 +25,16 @@ const routes: Array<RouteRecordRaw> = [
     path: '/wflow-stats',
     name: 'WflowStats',
     component: WflowRunStatList
+  },
+  {
+    path: '/wflow-rules',
+    name: 'RuleResults',
+    component: RuleResultList
+  },
+  {
+    path: '/wflow-rules/:runOid',
+    name: 'RuleResults',
+    component: RuleResultList
   }
 ]
 
