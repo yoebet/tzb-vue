@@ -3,7 +3,8 @@ import {
   locale, ElDatePicker, ElCheckbox, ElTable, ElTableColumn, ElPagination,
   ElInput, ElForm, ElFormItem, ElButton, ElLoading, ElTooltip,
   ElCollapse, ElCollapseItem, ElCollapseTransition, ElDivider,
-  ElSwitch, ElRadioGroup, ElRadio, ElLink
+  ElSwitch, ElRadioGroup, ElRadio, ElLink,
+  ElSelect, ElOption, ElOptionGroup
 } from 'element-plus'
 import lang from 'element-plus/lib/locale/lang/zh-cn'
 import 'dayjs/locale/zh-cn'
@@ -35,4 +36,7 @@ createApp(App)
   .use(ElRadioGroup)
   .use(ElRadio)
   .use(ElLink)
+  .use(ElSelect)
+  .use(ElOption)
+  .use(ElOptionGroup)
   .mount('#app')

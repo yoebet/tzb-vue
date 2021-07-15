@@ -10,7 +10,7 @@
       <el-form-item label="规则分组">
         <el-radio-group v-model="groupType" @change="filterChange">
           <el-radio label="ds">数据源</el-radio>
-          <el-radio label="ds-table">数据源-表</el-radio>
+          <el-radio label="ds-table">数据源 - 表</el-radio>
         </el-radio-group>
       </el-form-item>
     </el-form>
@@ -30,7 +30,8 @@
       <template #title>
         <div class="accordion-title">
           源头稽核：
-          <span class="collapse-group-name">{{ group.name }}</span>
+          <span class="collapse-group-name1" v-if="group.names">{{ group.names[0] }}</span>
+          <span class="collapse-group-name2" v-if="group.names&&group.names[1]">{{ group.names[1] }}</span>
           &nbsp;（<span class="rules-count">{{ group.tableData.length }}</span>）
         </div>
       </template>
@@ -94,18 +95,24 @@
             prop="stdDepName"
             label="管理部门">
         </el-table-column>
+        <el-table-column
+            prop="sendToDep"
+            label="发送部门">
+        </el-table-column>
       </el-table>
     </el-collapse-item>
 
     <el-collapse-item :name="'x-'+group.code" v-for="group in xGroups" :key="group.code">
       <template #title>
         <div class="accordion-title">跨系统校验：
-          <span class="collapse-group-name">{{ group.name }}</span>
+          <span class="collapse-group-name1">{{ group.names[0] }}</span>
+          <span class="collapse-group-name2" v-if="group.names[1]">{{ group.names[1] }}</span>
           &nbsp;（<span class="rules-count">{{ group.tableData.length }}</span>）
         </div>
       </template>
       <el-table
           :data="group.tableData"
+          row-key="resdOid"
           style="width: 100%">
         <el-table-column
             type="index"
@@ -143,6 +150,20 @@
             </span>
           </template>
         </el-table-column>
+        <el-table-column
+            prop="sendToDep"
+            label="发送部门">
+          <template #default="scope">
+            <el-select v-model="scope.row.sendToDep" multiple placeholder="部门">
+              <el-option
+                  v-for="item in deps"
+                  :key="item.orgId"
+                  :label="item.orgName"
+                  :value="item.orgId">
+              </el-option>
+            </el-select>
+          </template>
+        </el-table-column>
       </el-table>
     </el-collapse-item>
   </el-collapse>
@@ -155,20 +176,25 @@
 import {Vue} from "vue-class-component";
 import {getAuditRuleResults} from "@/api/etl-wflow-run-api";
 import {DmcAuditRuleResult, DmcAuditRuleResultCodes as Codes} from "@/models/dmc-audit-rule-result";
+import {Department} from "@/models/department";
+import {getDepartments} from "@/api/user-dep-api";
 
 interface CollapseGroup {
   code: string,
-  name: string,
+  names: string[],
   tableData: DmcAuditRuleResult[]
 }
 
 export default class RuleResultList extends Vue {
   allRuleData: DmcAuditRuleResult[] | null = null
   errorRuleData: DmcAuditRuleResult[] | null = null
+  errorRuleDataMap: Map<string, DmcAuditRuleResult> = new Map<string, DmcAuditRuleResult>()
   showAllRules = false
   groupType: 'ds' | 'ds-table' = 'ds'
   sGroups: CollapseGroup[] = []
   xGroups: CollapseGroup[] = []
+
+  deps: Department[] = []
 
   tableDataLoading = false
   private runOid = ''
@@ -195,8 +221,11 @@ export default class RuleResultList extends Vue {
     for (const [code, list] of Array.from(groupsMap)) {
       const tab = list[0].tab
       const dsName = tab.dbResourceName
-      const name = this.groupType === 'ds-table' ? `${dsName} - ${tab.tabName}` : dsName
-      groups.push({code, name, tableData: list})
+      const names: string[] = [dsName]
+      if (this.groupType === 'ds-table') {
+        names.push(tab.tabName)
+      }
+      groups.push({code, names, tableData: list})
 
       if (pushCollapseName && this.collapseNames) {
         this.collapseNames.push(collapseNamePrefix + code)
@@ -206,10 +235,10 @@ export default class RuleResultList extends Vue {
     return groups
   }
 
-  set tableData(value: DmcAuditRuleResult[]) {
+  set tableData(ruleResults: DmcAuditRuleResult[]) {
     const sTableData: DmcAuditRuleResult[] = []
     const xTableData: DmcAuditRuleResult[] = []
-    value.forEach(wf => {
+    ruleResults.forEach(wf => {
       if (wf.xsRule) {
         xTableData.push(wf)
       } else {
@@ -233,6 +262,7 @@ export default class RuleResultList extends Vue {
 
   async created(): Promise<void> {
     await this.fetchData()
+    this.deps = await getDepartments()
   }
 
   async fetchData(): Promise<void> {
@@ -246,23 +276,37 @@ export default class RuleResultList extends Vue {
     let list: DmcAuditRuleResult[]
     if (this.showAllRules) {
       list = await getAuditRuleResults(this.runOid, null)
-      this.allRuleData = list
     } else {
       list = await getAuditRuleResults(this.runOid, this.resdResultStatus)
-      this.errorRuleData = list
     }
-    if (list) {
-      list.map(wf => {
-        wf.resdResultStatusName = Codes.ResultStatusNames['s' + wf.resdResultStatus]
-        wf.resdExecStatusName = Codes.ExecStatusNames['s' + wf.resdExecStatus]
-        wf.resdResultName = wf.resdResultStatusName
-        if (!wf.resdResultName && wf.resdExecStatus === 4) {
-          wf.resdResultName = '执行错误'
-        }
-      })
-      this.tableData = list
-    } else {
+    if (!list) {
       this.tableDataLoading = false
+      return
+    }
+
+    list = list.map(wf => {
+      wf.failed = wf.resdExecStatus === 4 || wf.resdResultStatus !== 1
+      if (wf.failed) {
+        const cur = this.errorRuleDataMap.get(wf.resdOid)
+        if (cur) {
+          return cur
+        }
+        this.errorRuleDataMap.set(wf.resdOid, wf)
+      }
+      wf.resdResultStatusName = Codes.ResultStatusNames['s' + wf.resdResultStatus]
+      wf.resdExecStatusName = Codes.ExecStatusNames['s' + wf.resdExecStatus]
+      wf.resdResultName = wf.resdResultStatusName
+      if (!wf.resdResultName && wf.resdExecStatus === 4) {
+        wf.resdResultName = '执行错误'
+      }
+      return wf
+    })
+    this.tableData = list
+
+    if (this.showAllRules) {
+      this.allRuleData = list
+    } else {
+      this.errorRuleData = list
     }
   }
 
@@ -278,7 +322,7 @@ export default class RuleResultList extends Vue {
       if (this.errorRuleData) {
         this.tableData = this.errorRuleData
       } else if (this.allRuleData) {
-        this.errorRuleData = this.allRuleData.filter(rr => rr.resdExecStatus === 4 || rr.resdResultStatus !== 1)
+        this.errorRuleData = this.allRuleData.filter(rr => rr.failed)
         this.tableData = this.allRuleData
       } else {
         await this.fetchData()
@@ -321,8 +365,13 @@ export default class RuleResultList extends Vue {
   cursor: pointer;
 }
 
-.collapse-group-name {
+.collapse-group-name1 {
+  color: darkred;
+}
+
+.collapse-group-name2 {
   color: teal;
+  margin-left: 16px;
 }
 
 .rules-count {
