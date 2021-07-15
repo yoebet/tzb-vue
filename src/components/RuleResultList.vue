@@ -12,111 +12,163 @@
       </el-form-item>
     </el-form>-->
 
-  <el-table
-      :data="tableData"
-      v-loading="tableDataLoading"
-      style="width: 100%">
-    <el-table-column
-        sortable="true"
-        prop="tab.dbResourceName"
-        class-name="ds-name"
-        label="数据源">
-    </el-table-column>
-    <el-table-column
-        sortable="true"
-        prop="tab.tabName"
-        class-name="tab-name"
-        label="表名">
-    </el-table-column>
-    <el-table-column
-        sortable="true"
-        prop="ruleName"
-        class-name="rule-name"
-        min-width="250"
-        label="规则名">
-      <template #default="scope">
-        <el-tooltip class="item" effect="dark" :content="scope.row.ruleName" placement="top">
-          <div>{{ scope.row.ruleName }}</div>
-        </el-tooltip>
+  <!--  <el-divider></el-divider>-->
+
+  <el-collapse v-model="collapseName" :accordion="false" class="rules-accordions">
+    <el-collapse-item name="srcDataRules">
+      <template #title>
+        <span class="accordion-title">源头稽核</span>
+        &nbsp;（{{ sTableData.length }}）
       </template>
-    </el-table-column>
-    <!--    <el-table-column
+      <el-table
+          :data="sTableData"
+          v-loading="tableDataLoading"
+          style="width: 100%">
+        <el-table-column
             sortable="true"
-            prop="resdExecStatusName"
-            class-name="exec-status"
-            label="运行状态">
+            prop="tab.dbResourceName"
+            class-name="ds-name"
+            label="数据源">
+        </el-table-column>
+        <el-table-column
+            sortable="true"
+            prop="tab.tabName"
+            class-name="tab-name"
+            label="表名">
+        </el-table-column>
+        <el-table-column
+            sortable="true"
+            prop="ruleName"
+            class-name="rule-name"
+            min-width="250"
+            label="规则名">
+        </el-table-column>
+        <el-table-column
+            sortable="true"
+            prop="resdResultStatusName"
+            class-name="result-status"
+            label="结果">
           <template #default="scope">
-            <span :class="'run-status-'+scope.row.resdExecStatus">{{ scope.row.resdExecStatusName }}</span>
+            <span :class="'result-status-'+scope.row.resdResultStatus">{{ scope.row.resdResultStatusName }}</span>
           </template>
-        </el-table-column>-->
-    <el-table-column
-        sortable="true"
-        prop="resdResultStatusName"
-        class-name="result-status"
-        label="结果">
-      <template #default="scope">
-        <span :class="'result-status-'+scope.row.resdResultStatus">{{ scope.row.resdResultStatusName }}</span>
+        </el-table-column>
+        <el-table-column
+            sortable="true"
+            prop="fieldCode"
+            label="源字段">
+          <template #default="scope">
+            {{ scope.row.fieldCode }} {{ scope.row.fieldName }}
+          </template>
+        </el-table-column>
+        <el-table-column
+            sortable="true"
+            prop="stdFieldCode"
+            label="标准字段">
+          <template #default="scope">
+            {{ scope.row.stdFieldCode }} {{ scope.row.stdFieldName }}
+          </template>
+        </el-table-column>
+        <el-table-column
+            sortable="true"
+            prop="stdDepName"
+            label="管理部门">
+        </el-table-column>
+      </el-table>
+    </el-collapse-item>
+
+    <el-collapse-item name="xDataRules">
+      <template #title>
+        <span class="accordion-title">跨系统校验</span>
+        &nbsp;（{{ xTableData.length }}）
       </template>
-    </el-table-column>
-    <el-table-column
-        sortable="true"
-        prop="fieldCode"
-        label="源字段">
-      <template #default="scope">
-        {{ scope.row.fieldCode }} {{ scope.row.fieldName }}
-      </template>
-    </el-table-column>
-    <el-table-column
-        sortable="true"
-        prop="stdFieldCode"
-        label="标准字段">
-      <template #default="scope">
-        {{ scope.row.stdFieldCode }} {{ scope.row.stdFieldName }}
-      </template>
-    </el-table-column>
-    <el-table-column
-        sortable="true"
-        prop="stdDepName"
-        label="管理部门">
-    </el-table-column>
-  </el-table>
+      <el-table
+          :data="xTableData"
+          v-loading="tableDataLoading"
+          style="width: 100%">
+        <el-table-column
+            sortable="true"
+            prop="tab.dbResourceName"
+            class-name="ds-name"
+            label="数据源">
+        </el-table-column>
+        <el-table-column
+            sortable="true"
+            prop="tab.tabName"
+            class-name="tab-name"
+            label="表名">
+        </el-table-column>
+        <el-table-column
+            sortable="true"
+            prop="ruleName"
+            class-name="rule-name"
+            min-width="250"
+            label="规则名">
+        </el-table-column>
+        <el-table-column
+            sortable="true"
+            prop="resdResultStatusName"
+            class-name="result-status"
+            label="结果">
+          <template #default="scope">
+            <span :class="'result-status-'+scope.row.resdResultStatus">{{ scope.row.resdResultStatusName }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-collapse-item>
+  </el-collapse>
+
+  <!--  <el-divider></el-divider>-->
 
 </template>
 
 <script lang="ts">
-import {Vue, Options} from "vue-class-component";
+import {Vue} from "vue-class-component";
 import {getAuditRuleResults} from "@/api/etl-wflow-run-api";
-import {DmcAuditRuleResult, DmcAuditRuleResultCodes} from "@/models/dmc-audit-rule-result";
+import {DmcAuditRuleResult, DmcAuditRuleResultCodes as Codes} from "@/models/dmc-audit-rule-result";
 
-@Options({
-  // props: {
-  //   runOid: String
-  // }
-})
 export default class RuleResultList extends Vue {
-  tableData0: DmcAuditRuleResult[] = []
+  sTableData: DmcAuditRuleResult[] = []
+  xTableData: DmcAuditRuleResult[] = []
   tableDataLoading = false
   private runOid = ''
+  private collapseName: string[] = []
+  private resdResultStatus = -1
 
   set tableData(value: DmcAuditRuleResult[]) {
-    this.tableData0 = value.map(wf => {
+    const sTableData: DmcAuditRuleResult[] = []
+    const xTableData: DmcAuditRuleResult[] = []
+    value.forEach(wf => {
 
-      wf.resdResultStatusName = DmcAuditRuleResultCodes.ResultStatusNames['s' + wf.resdResultStatus]
-      wf.resdExecStatusName = DmcAuditRuleResultCodes.ExecStatusNames['s' + wf.resdExecStatus]
+      wf.resdResultStatusName = Codes.ResultStatusNames['s' + wf.resdResultStatus]
+      wf.resdExecStatusName = Codes.ExecStatusNames['s' + wf.resdExecStatus]
 
-      return wf
+      if (wf.xsRule) {
+        xTableData.push(wf)
+      } else {
+        sTableData.push(wf)
+      }
     })
+
+    this.collapseName = []
+    if (sTableData.length > 0) {
+      this.collapseName.push('srcDataRules')
+    }
+    if (xTableData.length > 0) {
+      this.collapseName.push('xDataRules')
+    }
+    this.sTableData = sTableData
+    this.xTableData = xTableData
+
     this.tableDataLoading = false
   }
 
   get tableData(): DmcAuditRuleResult[] {
-    return this.tableData0
+    return this.sTableData
   }
 
   async created(): Promise<void> {
     if (this.$route.params.runOid) {
       this.runOid = this.$route.params.runOid as string
-      console.log(this.runOid)
     }
     await this.fetchData()
   }
@@ -126,7 +178,7 @@ export default class RuleResultList extends Vue {
       return
     }
     this.tableDataLoading = true
-    const list: DmcAuditRuleResult[] = await getAuditRuleResults(this.runOid)
+    const list: DmcAuditRuleResult[] = await getAuditRuleResults(this.runOid, this.resdResultStatus)
     if (list) {
       this.tableData = list
     } else {
@@ -139,6 +191,14 @@ export default class RuleResultList extends Vue {
 </script>
 
 <style lang="scss" scoped>
+
+.rules-accordions {
+  margin-left: 50px;
+}
+
+.accordion-title {
+  font-weight: bold;
+}
 
 .el-icon-close {
   cursor: pointer;

@@ -6,6 +6,8 @@ export interface DmcAuditRuleResult {
 
   resdOid: string
 
+  xsRule?: boolean
+
   taskResultId: string
 
   // 执行状态，1-创建实例；2-正在执行；3-执行成功;4-执行失败

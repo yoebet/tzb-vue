@@ -29,8 +29,12 @@ export async function getAuditTabStats(runOid: string): Promise<DmcAuditTabStat[
   return Promise.resolve(page)
 }
 
-export async function getAuditRuleResults(runOid: string): Promise<DmcAuditRuleResult[]> {
-  const response = await fetch(`/api/audit/wfrun-rules/${runOid}`)
+export async function getAuditRuleResults(runOid: string, resdResultStatus: number): Promise<DmcAuditRuleResult[]> {
+  let url = `/api/audit/wfrun-rules/${runOid}`
+  if (resdResultStatus) {
+    url += '?resdResultStatus=' + resdResultStatus
+  }
+  const response = await fetch(url)
   const page: DmcAuditRuleResult[] = await response.json()
   return Promise.resolve(page)
 }
