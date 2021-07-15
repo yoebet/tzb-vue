@@ -20,3 +20,9 @@ $--font-path: '~element-plus/lib/theme-chalk/fonts';
 @import "~element-plus/packages/theme-chalk/src/collapse-item";
 @import "~element-plus/packages/theme-chalk/src/collapse-transition";
 @import "~element-plus/packages/theme-chalk/src/divider";
+@import "~element-plus/packages/theme-chalk/src/switch";
+
+
+.primary-color {
+  color: $--color-primary;
+}

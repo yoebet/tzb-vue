@@ -2,7 +2,8 @@ import {createApp} from 'vue'
 import {
   locale, ElDatePicker, ElCheckbox, ElTable, ElTableColumn, ElPagination,
   ElInput, ElForm, ElFormItem, ElButton, ElLoading, ElTooltip,
-  ElCollapse, ElCollapseItem, ElCollapseTransition, ElDivider
+  ElCollapse, ElCollapseItem, ElCollapseTransition, ElDivider,
+  ElSwitch
 } from 'element-plus'
 import lang from 'element-plus/lib/locale/lang/zh-cn'
 import 'dayjs/locale/zh-cn'
@@ -30,4 +31,5 @@ createApp(App)
   .use(ElCollapseItem)
   .use(ElCollapseTransition)
   .use(ElDivider)
+  .use(ElSwitch)
   .mount('#app')

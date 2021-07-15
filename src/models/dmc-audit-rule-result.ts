@@ -20,6 +20,8 @@ export interface DmcAuditRuleResult {
 
   resdResultStatusName?: string
 
+  resdResultName?: string
+
   resdResultDesc: string
 
   etlTaskId: string

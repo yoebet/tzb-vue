@@ -29,7 +29,7 @@ export async function getAuditTabStats(runOid: string): Promise<DmcAuditTabStat[
   return Promise.resolve(page)
 }
 
-export async function getAuditRuleResults(runOid: string, resdResultStatus: number): Promise<DmcAuditRuleResult[]> {
+export async function getAuditRuleResults(runOid: string, resdResultStatus: number | string | null): Promise<DmcAuditRuleResult[]> {
   let url = `/api/audit/wfrun-rules/${runOid}`
   if (resdResultStatus) {
     url += '?resdResultStatus=' + resdResultStatus

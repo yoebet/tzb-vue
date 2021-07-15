@@ -57,6 +57,7 @@
     <el-table-column
         sortable="true"
         prop="startTimeLabel"
+        width="160"
         label="开始执行时间">
     </el-table-column>
     <el-table-column
@@ -252,7 +253,7 @@ export default class WflowRunStatList extends Vue {
 }
 
 .run-status-8 {
-  color: rgba(255, 0, 0, 0.7);
+  color: rgba(255, 0, 0, 0.6);
 }
 
 .run-status-9 {
@@ -260,7 +261,7 @@ export default class WflowRunStatList extends Vue {
 }
 
 .fail-count {
-  color: rgba(255, 0, 0, 0.7);
+  color: rgba(255, 0, 0, 0.6);
 }
 
 .total-count {
