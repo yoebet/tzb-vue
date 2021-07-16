@@ -4,9 +4,9 @@ export interface DmcAuditRuleResult {
 
   tab: DmcAuditTabStat
 
-  sendToDep?: string
+  sendToDep?: string[]
 
-  sendToUser?: string
+  sendToDepLast?: string[]
 
   resdOid: string
 

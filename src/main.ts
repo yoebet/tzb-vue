@@ -4,7 +4,7 @@ import {
   ElInput, ElForm, ElFormItem, ElButton, ElLoading, ElTooltip,
   ElCollapse, ElCollapseItem, ElCollapseTransition, ElDivider,
   ElSwitch, ElRadioGroup, ElRadio, ElLink,
-  ElSelect, ElOption, ElOptionGroup
+  ElSelect, ElOption, ElOptionGroup, ElDropdown, ElDropdownMenu, ElDropdownItem
 } from 'element-plus'
 import lang from 'element-plus/lib/locale/lang/zh-cn'
 import 'dayjs/locale/zh-cn'
@@ -39,4 +39,7 @@ createApp(App)
   .use(ElSelect)
   .use(ElOption)
   .use(ElOptionGroup)
+  .use(ElDropdown)
+  .use(ElDropdownMenu)
+  .use(ElDropdownItem)
   .mount('#app')
