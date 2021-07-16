@@ -18,8 +18,11 @@ export interface DmcAuditWflowStat extends Model {
   xRuleCount: number
   xRuleFailCount: number
 
-  // I: initial, S: sent, D: done
+  // i: initial, s: sent, d: done
   oaStatus: number
+
+  oaStatusName?: string
+
   oaRemark: string
 
   oaOperator: string
@@ -30,5 +33,14 @@ export interface DmcAuditWflowStat extends Model {
 
   memo: string
   createTime: string
+
+}
+
+export class DmcAuditWflowStatCodes {
+  static OaStatusNames: Record<string, string> = {
+    si: '未发送',
+    ss: '已发送',
+    sd: '已终结',
+  }
 
 }

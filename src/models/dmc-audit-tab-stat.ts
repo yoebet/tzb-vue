@@ -1,5 +1,7 @@
 export interface DmcAuditTabStat {
 
+  runResOid: string
+
   runOid: string
 
   auditEntityId: string

@@ -24,13 +24,13 @@ export async function getWflowRunStats(filter: EtlWflowRunFilter): Promise<Page<
 }
 
 export async function getAuditTabStats(runOid: string): Promise<DmcAuditTabStat[]> {
-  const response = await fetch(`/api/audit/wfrun-tabs/${runOid}`)
+  const response = await fetch(`/api/audit-mat/wfrun-tabs/${runOid}`)
   const page: DmcAuditTabStat[] = await response.json()
   return Promise.resolve(page)
 }
 
 export async function getAuditRuleResults(runOid: string, resdResultStatus: number | string | null): Promise<DmcAuditRuleResult[]> {
-  let url = `/api/audit/wfrun-rules/${runOid}`
+  let url = `/api/audit-mat/wfrun-rules/${runOid}`
   if (resdResultStatus) {
     url += '?resdResultStatus=' + resdResultStatus
   }

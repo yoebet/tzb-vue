@@ -41,6 +41,27 @@
       :default-sort="{prop: 'startTimeLabel', order: 'descending'}"
       @sort-change="sortData"
       style="width: 100%">
+    <el-table-column type="expand">
+      <template #default="scope">
+        <div class="expand-block">
+          <div class="block-title">数据表</div>
+          <ul>
+            <li>040201贷款台账表</li>
+            <li>040221承兑台账</li>
+            <li>030801借款合同</li>
+          </ul>
+        </div>
+        <div class="expand-block">
+          <div class="block-title">OA发送</div>
+          <ul>
+            <li>部门1 &nbsp; <span class="sent-rules-count">3</span></li>
+            <li>部门2 &nbsp; <span class="sent-rules-count">8</span></li>
+            <li>部门3 &nbsp; <span class="sent-rules-count">12</span></li>
+          </ul>
+          <div>审批意见：xxx</div>
+        </div>
+      </template>
+    </el-table-column>
     <el-table-column
         sortable="true"
         prop="workflowName"
@@ -114,6 +135,13 @@
       </template>
     </el-table-column>
     <el-table-column
+        prop="oaStatusName"
+        label="OA状态">
+      <template #default="scope">
+        <span :class="'oa-status-'+scope.row.oaStatus">{{ scope.row.oaStatusName }}</span>
+      </template>
+    </el-table-column>
+    <el-table-column
         align="right"
         label="操作">
       <template #default="scope">
@@ -141,11 +169,11 @@
 import {Vue} from "vue-class-component";
 import {Page} from "@/api/page";
 import {getWflowRunStats} from "@/api/etl-wflow-run-api";
-import {EtlWflowRun, EtlWflowRunCodes, EtlWflowRunFilter} from "@/models/etl-wflow-run";
+import {EtlWflowRun, EtlWflowRunCodes as Codes, EtlWflowRunFilter} from "@/models/etl-wflow-run";
 import moment from 'moment';
 import {DateFormat, DateShortcuts, DateTimeFormat} from "@/config";
 import {timeElapseLabel} from "@/helper";
-import {DmcAuditWflowStat} from "@/models/dmc-audit-wflow-stat";
+import {DmcAuditWflowStat, DmcAuditWflowStatCodes} from "@/models/dmc-audit-wflow-stat";
 
 
 export default class WflowRunStatList extends Vue {
@@ -174,9 +202,10 @@ export default class WflowRunStatList extends Vue {
         }
       }
 
-      wf.accountTypeName = EtlWflowRunCodes.AccountTypeNames['s' + wf.accountType]
-      wf.runTypeName = EtlWflowRunCodes.RunTypeNames['s' + wf.runType]
-      wf.runStatusName = EtlWflowRunCodes.RunStatusNames['s' + wf.runStatusCode]
+      wf.accountTypeName = Codes.AccountTypeNames['s' + wf.accountType]
+      wf.runTypeName = Codes.RunTypeNames['s' + wf.runType]
+      wf.runStatusName = Codes.RunStatusNames['s' + wf.runStatusCode]
+      wf.oaStatusName = DmcAuditWflowStatCodes.OaStatusNames['s' + (wf.oaStatus || 'i')]
 
       if (wf.startTime) {
         const st = moment(+wf.startTime)
@@ -248,6 +277,21 @@ export default class WflowRunStatList extends Vue {
 
 <style lang="scss" scoped>
 
+.demo-table-expand {
+  font-size: 0;
+}
+
+.demo-table-expand label {
+  width: 90px;
+  color: #99a9bf;
+}
+
+.demo-table-expand .el-form-item {
+  margin-right: 0;
+  margin-bottom: 0;
+  width: 50%;
+}
+
 .el-icon-close {
   cursor: pointer;
 }
@@ -266,6 +310,32 @@ export default class WflowRunStatList extends Vue {
 
 .total-count {
   font-weight: bold;
+}
+
+.oa-status-i {
+
+}
+
+.oa-status-s {
+  color: #108ee9;
+}
+
+.oa-status-d {
+  color: green;
+}
+
+.expand-block {
+  margin-top: 1em;
+  .block-title {
+    font-weight: bold;
+  }
+  li {
+    list-style: none;
+  }
+  .sent-rules-count {
+    font-weight: bold;
+    color: #108ee9;
+  }
 }
 
 </style>
