@@ -214,11 +214,36 @@
   </el-collapse>
 
   <div class="sent-oa-box">
-    <div class="form-title-bar">发送OA</div>
-    <el-form class="sent-oa-form">
-      <el-form-item v-for="dr in depRuleRels" :key="dr.dep.orgId" :label="dr.dep.orgName">
-        {{ dr.ruleResultIds.size }}
-      </el-form-item>
+    <div class="sent-oa-title-bar">发送OA</div>
+    <el-form class="sent-oa-form" label-width="140">
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-form-item class="form-deps-title" label="发送部门">
+            <ul class="form-deps">
+              <li v-for="dr in depRuleRels" :key="dr.dep.orgId" class="form-dep-item">
+                <span class="dep-name">{{ dr.dep.orgName }}</span>
+                &nbsp;
+                <span class="dep-rules-count">{{ dr.ruleResultIds.size }}</span>
+              </li>
+            </ul>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="日期">
+          </el-form-item>
+          <el-form-item label="审批意见">
+            <el-input
+                type="textarea"
+                :rows="2"
+                placeholder="意见"
+                v-model="oaRemark">
+            </el-input>
+          </el-form-item>
+          <el-form-item label="" align="right">
+            <el-button type="primary" @click="sentOa">发送OA</el-button>
+          </el-form-item>
+        </el-col>
+      </el-row>
     </el-form>
   </div>
 
@@ -320,6 +345,7 @@ export default class RuleResultList extends Vue {
   private collapseNames: string[] | null = null
   private resdResultStatus = -2
 
+  private oaRemark = ''
 
   groupRules(ruleResults: DmcAuditRuleResult[],
              collapseNamePrefix: string,
@@ -509,6 +535,10 @@ export default class RuleResultList extends Vue {
     }
   }
 
+  async sentOa(): Promise<void> {
+    console.log(this.oaRemark)
+  }
+
 }
 
 </script>
@@ -536,14 +566,36 @@ export default class RuleResultList extends Vue {
   margin-top: 30px;
   margin-bottom: 50px;
 
-  .form-title-bar {
+  .sent-oa-title-bar {
+    font-size: 1.1em;
     font-weight: bold;
-    line-height: 30px;
+    margin-bottom: 20px;
   }
 
   .sent-oa-form {
     .el-form-item {
+    }
+
+    .el-form-item.form-deps-title {
       margin-bottom: 0;
+    }
+
+    ul.form-deps {
+      margin: 2em 0 0 0;
+      padding: 0;
+
+      li.form-dep-item {
+        list-style: none;
+        line-height: 24px;
+
+        .dep-name {
+        }
+
+        .dep-rules-count {
+          font-weight: bold;
+          color: #108ee9;
+        }
+      }
     }
   }
 }

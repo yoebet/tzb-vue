@@ -97,9 +97,9 @@
         label="标准字段规则">
       <template #default="scope">
         <template v-if="scope.row.stdRuleFailCount>0">
-          <span class="fail-count">{{ scope.row.stdRuleCount }}</span> /
+          <span class="fail-count">{{ scope.row.stdRuleFailCount }}</span> /
         </template>
-        <span class="total-count">{{ scope.row.stdRuleFailCount }}</span>
+        <span class="total-count">{{ scope.row.stdRuleCount }}</span>
       </template>
     </el-table-column>
     <el-table-column
@@ -108,16 +108,16 @@
         label="跨系统校验规则">
       <template #default="scope">
         <template v-if="scope.row.xRuleFailCount>0">
-          <span class="fail-count">{{ scope.row.xRuleCount }}</span> /
+          <span class="fail-count">{{ scope.row.xRuleFailCount }}</span> /
         </template>
-        <span class="total-count">{{ scope.row.xRuleFailCount }}</span>
+        <span class="total-count">{{ scope.row.xRuleCount }}</span>
       </template>
     </el-table-column>
     <el-table-column
         align="right"
         label="操作">
       <template #default="scope">
-        <router-link :to="'/wflow-rules/'+scope.row.wflowRunOid">
+        <router-link :to="'/wflow-rules/'+scope.row.wflowRunOid" v-if="scope.row.ruleCount>0">
           <el-button type="primary" @click="fetchData">执行详情</el-button>
         </router-link>
       </template>
@@ -198,7 +198,7 @@ export default class WflowRunStatList extends Vue {
   }
 
   async created(): Promise<void> {
-    this.filter.pageSize = 2
+    // this.filter.pageSize = 2
     // this.filter.workflowName = 'eas'
     await this.fetchData()
   }
