@@ -2,7 +2,6 @@ import {Page} from "@/api/page";
 import {EtlWflowRun, EtlWflowRunFilter} from "@/models/etl-wflow-run";
 import {buildFilterParams} from "@/models/pager";
 import {DmcAuditWflowStat} from "@/models/dmc-audit-wflow-stat";
-import {DmcAuditTabTask} from "@/models/dmc-audit-tab-task";
 import {DmcAuditRuleResult} from "@/models/dmc-audit-rule-result";
 import {DmcAuditTab} from "@/models/dmc-audit-tab";
 

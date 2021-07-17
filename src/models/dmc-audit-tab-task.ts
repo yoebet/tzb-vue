@@ -34,6 +34,13 @@ export interface DmcAuditTabTask extends DmcAuditTab{
   resBeginTime: string
 
   resEndTime: string
+
+  accountTime: string
+
+  // 账期类型：1-日，2-月
+  accountTimeType: number
+
+  accountTimeTypeName?: number
 }
 
 export class DmcAuditTabCodes {

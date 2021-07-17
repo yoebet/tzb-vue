@@ -40,8 +40,9 @@
       v-loading="tableDataLoading"
       :default-sort="{prop: 'startTimeLabel', order: 'descending'}"
       @sort-change="sortData"
+      row-key="oid"
       style="width: 100%">
-    <el-table-column type="expand">
+    <el-table-column type="expand" column-key="expand">
       <template #default="scope">
 
         <el-collapse :model-value="['tab-list','oa-records']" :accordion="false">
@@ -230,7 +231,7 @@ export default class WflowRunStatList extends Vue {
   }
 
   async created(): Promise<void> {
-    this.filter.pageSize = 1
+    this.filter.pageSize = 2
     // this.filter.workflowName = 'eas'
     await this.fetchData()
   }

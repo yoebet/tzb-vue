@@ -32,7 +32,9 @@
           源头稽核：
           <span class="collapse-group-name1" v-if="group.names">{{ group.names[0] }}</span>
           <span class="collapse-group-name2" v-if="group.names&&group.names[1]">{{ group.names[1] }}</span>
-          &nbsp;（<span class="rules-count">{{ group.tableData.length }}</span>）
+          <span class="collapse-group-account-times">&nbsp;&nbsp;{{ group.accountTimes }}</span>
+          &nbsp;（<span class="failed-rules-count">{{ group.failedCount }}</span>
+          <span class="rules-count" v-if="showAllRules"> / {{ group.tableData.length }}</span>）
         </div>
       </template>
       <el-table
@@ -134,6 +136,7 @@
         <div class="accordion-title">跨系统校验：
           <span class="collapse-group-name1">{{ group.names[0] }}</span>
           <span class="collapse-group-name2" v-if="group.names[1]">{{ group.names[1] }}</span>
+          <span class="collapse-group-account-times">&nbsp;&nbsp;{{ group.accountTimes }}</span>
           &nbsp;（<span class="failed-rules-count">{{ group.failedCount }}</span>
           <span class="rules-count" v-if="showAllRules"> / {{ group.tableData.length }}</span>）
         </div>
@@ -215,36 +218,61 @@
 
   <div class="sent-oa-box">
     <div class="sent-oa-title-bar">发送OA</div>
-    <el-form class="sent-oa-form" label-width="140">
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item class="form-deps-title" label="发送部门">
-            <ul class="form-deps">
-              <li v-for="dr in depRuleRels" :key="dr.dep.orgId" class="form-dep-item">
-                <span class="dep-name">{{ dr.dep.orgName }}</span>
-                &nbsp;
-                <span class="dep-rules-count">{{ dr.ruleResultIds.size }}</span>
-              </li>
-            </ul>
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="日期">
-          </el-form-item>
-          <el-form-item label="审批意见">
-            <el-input
-                type="textarea"
-                :rows="2"
-                placeholder="意见"
-                v-model="oaRemark">
-            </el-input>
-          </el-form-item>
-          <el-form-item label="" align="right">
-            <el-button type="primary" @click="sentOa">发送OA</el-button>
-          </el-form-item>
-        </el-col>
-      </el-row>
-    </el-form>
+
+    <el-table
+        :data="depRuleRels"
+        class="deps-table"
+        style="width: 100%">
+      <el-table-column
+          type="index"
+          align="right"
+          label="#">
+      </el-table-column>
+      <el-table-column
+          width="150"
+          prop="dep.orgName"
+          label="部门">
+      </el-table-column>
+      <el-table-column
+          width="150"
+          prop="userId"
+          label="人员">
+        <template #default="scope">
+          <el-select v-model="scope.row.userId" placeholder="人员">
+            <el-option
+                v-for="item in scope.row.dep.users"
+                :key="item.userId"
+                :label="item.userName"
+                :value="item.userId">
+            </el-option>
+          </el-select>
+        </template>
+      </el-table-column>
+      <el-table-column
+          prop="ruleResultIds.size"
+          label="涉及规则数">
+        <template #default="scope">
+          <span class="dep-rules-count">{{ scope.row.ruleResultIds.size }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column
+          min-width="150"
+          prop="remark"
+          label="审批意见">
+        <template #default="scope">
+          <el-input
+              type="textarea"
+              :rows="2"
+              placeholder="意见"
+              v-model="scope.row.remark">
+          </el-input>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <div align="right" class="sent-oa-box-bb">
+      <el-button type="primary" @click="sentOa">发送OA</el-button>
+    </div>
   </div>
 
   <!--  <el-divider></el-divider>-->
@@ -263,11 +291,14 @@ interface CollapseGroup {
   code: string,
   names: string[],
   failedCount: number
+  accountTimes: string
   tableData: DmcAuditRuleResult[]
 }
 
 interface DepRuleRel {
   dep: Department
+  userId: string
+  remark: string
   ruleResultIds: Set<string>
 }
 
@@ -336,6 +367,7 @@ export default class RuleResultList extends Vue {
     }
   ]
   depsMap: Map<string, Department> = new Map<string, Department>()
+  depsNameMap: Map<string, Department> = new Map<string, Department>()
 
   depRuleRelsMap: Map<string, DepRuleRel> = new Map<string, DepRuleRel>()
   depRuleRels: DepRuleRel[] = []
@@ -370,8 +402,9 @@ export default class RuleResultList extends Vue {
       if (this.groupType === 'ds-table') {
         names.push(tab.tabName)
       }
+      const accountTimes = Array.from(new Set<string>(list.map(rr => rr.tab.accountTime).filter(at => at))).join(',')
       const failedCount = list.filter(rr => rr.failed).length
-      groups.push({code, names, failedCount, tableData: list})
+      groups.push({code, names, failedCount, accountTimes, tableData: list})
 
       if (pushCollapseName && this.collapseNames) {
         this.collapseNames.push(collapseNamePrefix + code)
@@ -410,6 +443,7 @@ export default class RuleResultList extends Vue {
     await this.fetchData()
     // this.deps = await getDepartments()
     this.depsMap = new Map<string, Department>(this.deps.map(dep => [dep.orgId, dep]))
+    this.depsNameMap = new Map<string, Department>(this.deps.map(dep => [dep.orgName, dep]))
   }
 
   async fetchData(): Promise<void> {
@@ -444,9 +478,10 @@ export default class RuleResultList extends Vue {
       }
 
       if (wf.xsRule && wf.stdDepId) {
-        // TODO:
-        const depId = wf.stdDepId
-        this.setSendToDep(wf, [depId])
+        const dep = this.depsMap.get(wf.stdDepId) || this.depsNameMap.get(wf.stdDepName)
+        if (dep) {
+          this.setSendToDep(wf, [dep.orgId])
+        }
       }
       return wf
     })
@@ -495,7 +530,7 @@ export default class RuleResultList extends Vue {
     }
   }
 
-  setUniDepartment(ruleResults: DmcAuditRuleResult[], dep: Department, user?: User): void {
+  setUniDepartment(ruleResults: DmcAuditRuleResult[], dep: Department): void {
     ruleResults.forEach(rr => {
       rr.sendToDep = [dep.orgId]
       this.depSelectChanged(rr)
@@ -527,7 +562,13 @@ export default class RuleResultList extends Vue {
       } else {
         const dep = this.depsMap.get(depId)
         if (dep) {
-          depRuleRel = {dep, ruleResultIds: new Set<string>([ruleResultId])}
+          const user0 = dep.users ? dep.users[0] : null
+          depRuleRel = {
+            dep,
+            ruleResultIds: new Set<string>([ruleResultId]),
+            userId: user0 ? user0.userId : '',
+            remark: '这是本月的数据质量问题，请至数据质量管控平台查看，做好排查分析，并制定整改计划。'
+          }
           this.depRuleRelsMap.set(depId, depRuleRel)
           this.depRuleRels.push(depRuleRel)
         }
@@ -562,8 +603,9 @@ export default class RuleResultList extends Vue {
   margin-left: 30px;
 }
 
+
 .sent-oa-box {
-  margin-top: 30px;
+  margin-top: 50px;
   margin-bottom: 50px;
 
   .sent-oa-title-bar {
@@ -572,37 +614,19 @@ export default class RuleResultList extends Vue {
     margin-bottom: 20px;
   }
 
-  .sent-oa-form {
-    .el-form-item {
-    }
+  .sent-oa-box-bb {
+    margin-top: 20px;
+  }
 
-    .el-form-item.form-deps-title {
-      margin-bottom: 0;
-    }
+  .deps-table {
 
-    ul.form-deps {
-      margin: 2em 0 0 0;
-      padding: 0;
-
-      li.form-dep-item {
-        list-style: none;
-        line-height: 24px;
-
-        .dep-name {
-        }
-
-        .dep-rules-count {
-          font-weight: bold;
-          color: #108ee9;
-        }
-      }
+    .dep-rules-count {
+      font-weight: bold;
+      color: indianred;
     }
   }
 }
 
-.rules-accordions {
-  //margin-left: 50px;
-}
 
 .accordion-title {
   font-weight: bold;
