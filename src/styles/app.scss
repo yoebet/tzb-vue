@@ -13,3 +13,26 @@
 .el-tag.el-tag--info {
   color: #404349;
 }
+
+.el-table__expanded-cell {
+
+  .el-collapse {
+    border-top: none;
+    border-bottom: none;
+
+    .el-collapse-item {
+      //margin-top: 1em;
+
+      .el-collapse-item__header {
+        //background-color: #f6f6f6;
+        color: teal;
+        font-weight: bold;
+        padding-left: .5em;
+      }
+
+      .el-collapse-item__wrap {
+         border-bottom: none;
+      }
+    }
+  }
+}

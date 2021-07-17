@@ -1,34 +1,14 @@
-export interface DmcAuditTabStat {
+import {DmcAuditTab} from "@/models/dmc-audit-tab";
+
+export interface DmcAuditTabTask extends DmcAuditTab{
 
   runResOid: string
-
-  runOid: string
-
-  auditEntityId: string
-
-  auditEntity: string
-
-  auditResource: string
-
-  dbResourceCode: string
-
-  dbResourceName: string
-
-  structId: string
-
-  tabOwner: string
-
-  tabCode: string
-
-  tabName: string
 
   etOid: string
 
   etlTaskName: string
 
   etlNodeInstanceid: string
-
-  checkObjId: string
 
   tmResultStatus: number
 
@@ -54,13 +34,6 @@ export interface DmcAuditTabStat {
   resBeginTime: string
 
   resEndTime: string
-
-  accountTime: string
-
-  // 账期类型：1-日，2-月
-  accountTimeType: number
-
-  accountTimeTypeName?: number
 }
 
 export class DmcAuditTabCodes {

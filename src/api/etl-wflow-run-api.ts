@@ -2,8 +2,9 @@ import {Page} from "@/api/page";
 import {EtlWflowRun, EtlWflowRunFilter} from "@/models/etl-wflow-run";
 import {buildFilterParams} from "@/models/pager";
 import {DmcAuditWflowStat} from "@/models/dmc-audit-wflow-stat";
-import {DmcAuditTabStat} from "@/models/dmc-audit-tab-stat";
+import {DmcAuditTabTask} from "@/models/dmc-audit-tab-task";
 import {DmcAuditRuleResult} from "@/models/dmc-audit-rule-result";
+import {DmcAuditTab} from "@/models/dmc-audit-tab";
 
 export async function getEtlWflowRuns(filter: EtlWflowRunFilter): Promise<Page<EtlWflowRun>> {
   // base='http://localhost:8100'
@@ -23,9 +24,9 @@ export async function getWflowRunStats(filter: EtlWflowRunFilter): Promise<Page<
   return Promise.resolve(page)
 }
 
-export async function getAuditTabStats(runOid: string): Promise<DmcAuditTabStat[]> {
+export async function getAuditTabStats(runOid: string): Promise<DmcAuditTab[]> {
   const response = await fetch(`/api/audit-mat/wfrun-tabs/${runOid}`)
-  const page: DmcAuditTabStat[] = await response.json()
+  const page: DmcAuditTab[] = await response.json()
   return Promise.resolve(page)
 }
 

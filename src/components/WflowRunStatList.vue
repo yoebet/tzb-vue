@@ -43,27 +43,25 @@
       style="width: 100%">
     <el-table-column type="expand">
       <template #default="scope">
-        <div class="expand-block">
-          <div class="block-title">数据表</div>
-          <ul>
-            <li>040201贷款台账表</li>
-            <li>040221承兑台账</li>
-            <li>030801借款合同</li>
-          </ul>
-        </div>
-        <div class="expand-block">
-          <div class="block-title">OA发送</div>
-          <ul>
-            <li>部门1 &nbsp; <span class="sent-rules-count">3</span></li>
-            <li>部门2 &nbsp; <span class="sent-rules-count">8</span></li>
-            <li>部门3 &nbsp; <span class="sent-rules-count">12</span></li>
-          </ul>
-          <div>审批意见：xxx</div>
-        </div>
+
+        <el-collapse :model-value="['tab-list','oa-records']" :accordion="false">
+          <el-collapse-item name="tab-list" title="数据表">
+            <wflow-run-table-list :run-oid="scope.row.wflowRunOid"></wflow-run-table-list>
+          </el-collapse-item>
+
+          <el-collapse-item name="oa-records" title="OA发送">
+            <ul>
+              <li>部门1 &nbsp; <span class="sent-rules-count">3</span></li>
+              <li>部门2 &nbsp; <span class="sent-rules-count">8</span></li>
+              <li>部门3 &nbsp; <span class="sent-rules-count">12</span></li>
+            </ul>
+            <div>审批意见：xxx</div>
+          </el-collapse-item>
+        </el-collapse>
+
       </template>
     </el-table-column>
     <el-table-column
-        sortable="true"
         prop="workflowName"
         label="流程名称">
     </el-table-column>
@@ -76,7 +74,7 @@
         label="启动方式">
     </el-table-column>
     <el-table-column
-        sortable="true"
+        sortable
         prop="startTimeLabel"
         width="160"
         label="开始执行时间">
@@ -166,7 +164,7 @@
 </template>
 
 <script lang="ts">
-import {Vue} from "vue-class-component";
+import {Vue, Options} from "vue-class-component";
 import {Page} from "@/api/page";
 import {getWflowRunStats} from "@/api/etl-wflow-run-api";
 import {EtlWflowRun, EtlWflowRunCodes as Codes, EtlWflowRunFilter} from "@/models/etl-wflow-run";
@@ -174,8 +172,13 @@ import moment from 'moment';
 import {DateFormat, DateShortcuts, DateTimeFormat} from "@/config";
 import {timeElapseLabel} from "@/helper";
 import {DmcAuditWflowStat, DmcAuditWflowStatCodes} from "@/models/dmc-audit-wflow-stat";
+import WflowRunTableList from "@/components/WflowRunTableList.vue";
 
-
+@Options({
+  components: {
+    WflowRunTableList
+  }
+})
 export default class WflowRunStatList extends Vue {
   dateFormat = DateFormat
   tableData0: DmcAuditWflowStat[] = []
@@ -227,7 +230,7 @@ export default class WflowRunStatList extends Vue {
   }
 
   async created(): Promise<void> {
-    // this.filter.pageSize = 2
+    this.filter.pageSize = 1
     // this.filter.workflowName = 'eas'
     await this.fetchData()
   }
@@ -277,21 +280,6 @@ export default class WflowRunStatList extends Vue {
 
 <style lang="scss" scoped>
 
-.demo-table-expand {
-  font-size: 0;
-}
-
-.demo-table-expand label {
-  width: 90px;
-  color: #99a9bf;
-}
-
-.demo-table-expand .el-form-item {
-  margin-right: 0;
-  margin-bottom: 0;
-  width: 50%;
-}
-
 .el-icon-close {
   cursor: pointer;
 }
@@ -326,16 +314,20 @@ export default class WflowRunStatList extends Vue {
 
 .expand-block {
   margin-top: 1em;
+
   .block-title {
     font-weight: bold;
   }
+
   li {
     list-style: none;
   }
+
   .sent-rules-count {
     font-weight: bold;
     color: #108ee9;
   }
 }
+
 
 </style>

@@ -1,8 +1,8 @@
-import {DmcAuditTabStat} from "@/models/dmc-audit-tab-stat";
+import {DmcAuditTabTask} from "@/models/dmc-audit-tab-task";
 
 export interface DmcAuditRuleResult {
 
-  tab: DmcAuditTabStat
+  tab: DmcAuditTabTask
 
   sendToDep?: string[]
 
