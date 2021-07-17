@@ -286,6 +286,10 @@ import {DmcAuditRuleResult, DmcAuditRuleResultCodes as Codes} from "@/models/dmc
 import {Department} from "@/models/department";
 import {getDepartments} from "@/api/user-dep-api";
 import {User} from "@/models/user";
+import {DmcAuditSentOa} from "@/models/dmc-audit-sent-oa";
+import {DmcAuditSentOaDep} from "@/models/dmc-audit-sent-oa-dep";
+import {sendOa} from "@/api/send-oa-api";
+import {Result} from "@/models/result";
 
 interface CollapseGroup {
   code: string,
@@ -577,7 +581,70 @@ export default class RuleResultList extends Vue {
   }
 
   async sentOa(): Promise<void> {
-    console.log(this.oaRemark)
+
+    const depRuleRels = this.depRuleRels.filter(drr => drr.ruleResultIds.size > 0)
+    if (depRuleRels.length === 0) {
+      alert(`尚未指派部门`)
+      return
+    }
+    for (const drr of depRuleRels) {
+      const depName = drr.dep.orgName
+      if (!drr.userId) {
+        alert(`（${depName}）未指定人员`)
+        return
+      }
+      if (!drr.remark) {
+        alert(`（${depName}）未填写意见`)
+        return
+      }
+    }
+
+    if (!confirm('要发送OA吗？（共' + depRuleRels.length + '个部门）')) {
+      return
+    }
+
+    const sentOaDeps: DmcAuditSentOaDep[] = depRuleRels.map(drr => {
+
+      const errorRuleResults = Array.from(drr.ruleResultIds)
+          .map(rid => this.errorRuleDataMap.get(rid)) as DmcAuditRuleResult[]
+      const rr0: DmcAuditRuleResult | undefined = errorRuleResults.find(rr => rr.tab.accountTime)
+      const accountTime: string = rr0 ? rr0.tab.accountTime : ''
+      const tableCount = new Set<string>(errorRuleResults.map(rr => rr.tab.tabCode)).size
+
+      const dep = drr.dep
+      const oaDep: DmcAuditSentOaDep = {
+        depId: dep.orgId,
+        depName: dep.orgName,
+        userId: drr.userId,
+        remark: drr.remark,
+        failedRulesCount: drr.ruleResultIds.size,
+        accountTime,
+        tableCount,
+      }
+      return oaDep
+    })
+
+    const sentOa: DmcAuditSentOa = {
+      oid: '',// be generated at backend
+      wflowRunOid: this.runOid,
+      sentOaDeps
+    }
+
+    console.log(sentOa)
+
+    const result: Result<DmcAuditSentOa> = await sendOa(sentOa.wflowRunOid, sentOa)
+    if (result.code !== 0) {
+      alert(result.message)
+      return
+    }
+
+    const newRecord: DmcAuditSentOa | undefined = result.data
+    if (!newRecord) {
+      alert('发送失败')
+      return
+    }
+
+    console.log(newRecord)
   }
 
 }

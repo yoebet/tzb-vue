@@ -12,6 +12,4 @@ export interface DmcAuditSentOaDep {
   remark: string
 
   accountTime: string
-  accountTimeType: number
-  accountTimeTypeName?: number
 }

@@ -21,15 +21,10 @@ export interface DmcAuditWflowStat extends Model {
   // i: initial, s: sent, d: done
   oaStatus: number
 
-  oaStatusName?: string
-
-  oaRemark: string
-
   oaOperator: string
-  oaSentTime: string
   oaSolvedTime: string
 
-  oaSentContentJson: string
+  oaSentCount: number
 
   memo: string
   createTime: string
