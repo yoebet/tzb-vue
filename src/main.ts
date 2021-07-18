@@ -3,7 +3,7 @@ import {
   locale, ElDatePicker, ElCheckbox, ElTable, ElTableColumn, ElPagination,
   ElInput, ElForm, ElFormItem, ElButton, ElLoading, ElTooltip,
   ElCollapse, ElCollapseItem, ElCollapseTransition, ElDivider,
-  ElSwitch, ElRadioGroup, ElRadio, ElLink, ElRow, ElCol,
+  ElSwitch, ElRadioGroup, ElRadio, ElLink, ElRow, ElCol, ElPageHeader,
   ElSelect, ElOption, ElOptionGroup, ElDropdown, ElDropdownMenu, ElDropdownItem
 } from 'element-plus'
 import lang from 'element-plus/lib/locale/lang/zh-cn'
@@ -44,4 +44,5 @@ createApp(App)
   .use(ElDropdown)
   .use(ElDropdownMenu)
   .use(ElDropdownItem)
+  .use(ElPageHeader)
   .mount('#app')

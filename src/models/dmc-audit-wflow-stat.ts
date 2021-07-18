@@ -19,7 +19,7 @@ export interface DmcAuditWflowStat extends Model {
   xRuleFailCount: number
 
   // i: initial, s: sent, d: done
-  oaStatus: number
+  oaStatus: string
 
   oaOperator: string
   oaSolvedTime: string

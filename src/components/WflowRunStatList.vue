@@ -59,6 +59,7 @@
       </template>
     </el-table-column>
     <el-table-column
+        min-width="100"
         prop="workflowName"
         label="流程名称">
     </el-table-column>
@@ -121,7 +122,7 @@
     <el-table-column
         align="right"
         prop="xRuleCount"
-        label="跨系统校验规则">
+        label="跨系统校验">
       <template #default="scope">
         <template v-if="scope.row.xRuleFailCount>0">
           <span class="fail-count">{{ scope.row.xRuleFailCount }}</span> /
@@ -130,7 +131,12 @@
       </template>
     </el-table-column>
     <el-table-column
-        prop="oaStatusName"
+        align="right"
+        prop="oaSentCount"
+        label="OA记录">
+    </el-table-column>
+    <el-table-column
+        prop="oaStatus"
         label="OA状态">
       <template #default="scope">
         <span :class="'oa-status-'+scope.row.oaStatus">{{ scope.row.oaStatusName }}</span>
@@ -138,10 +144,14 @@
     </el-table-column>
     <el-table-column
         align="right"
+        width="200"
         label="操作">
       <template #default="scope">
+        <el-button @click="terminateStatus(scope.row)" v-if="scope.row.oaStatus!=='d'">终结</el-button>
+        <el-button @click="undoTerminateStatus(scope.row)" v-else>撤销</el-button>
+        &nbsp;
         <router-link :to="'/wflow-rules/'+scope.row.wflowRunOid" v-if="scope.row.ruleCount>0">
-          <el-button type="primary" @click="fetchData">执行详情</el-button>
+          <el-button type="primary">执行详情</el-button>
         </router-link>
       </template>
     </el-table-column>
@@ -163,7 +173,7 @@
 <script lang="ts">
 import {Vue, Options} from "vue-class-component";
 import {Page} from "@/api/page";
-import {getWflowRunStats} from "@/api/etl-wflow-run-api";
+import {getWflowRunStats, setWflowOaStatus} from "@/api/etl-wflow-run-api";
 import {EtlWflowRun, EtlWflowRunCodes as Codes, EtlWflowRunFilter} from "@/models/etl-wflow-run";
 import moment from 'moment';
 import {DateFormat, DateShortcuts, DateTimeHMSFormat} from "@/config";
@@ -171,6 +181,7 @@ import {timeElapseLabel} from "@/helper";
 import {DmcAuditWflowStat, DmcAuditWflowStatCodes} from "@/models/dmc-audit-wflow-stat";
 import WflowRunTableList from "@/components/WflowRunTableList.vue";
 import SentOaRecordList from "@/components/SentOaRecordList.vue";
+import {Result} from "@/models/result";
 
 @Options({
   components: {
@@ -271,6 +282,30 @@ export default class WflowRunStatList extends Vue {
     this.filter.sort = prop
     this.filter.sortDir = (order === 'ascending') ? 'asc' : 'desc'
     await this.fetchData()
+  }
+
+  async terminateStatus(stat: DmcAuditWflowStat): Promise<void> {
+    if (!confirm('要设置为“终结”状态吗？\n（如果数据/规则的问题都已得到处理，就可以设置为“终结”状态）')) {
+      return
+    }
+    await this.setOaStatus(stat, 'd')
+  }
+
+  async undoTerminateStatus(stat: DmcAuditWflowStat): Promise<void> {
+    if (!confirm('要撤销“终结”状态吗？')) {
+      return
+    }
+    await this.setOaStatus(stat, stat.oaSentCount > 0 ? 's' : 'i')
+  }
+
+  async setOaStatus(stat: DmcAuditWflowStat, status: string): Promise<void> {
+    const result: Result<never> = await setWflowOaStatus(stat.oid, status)
+    if (result.code !== 0) {
+      alert(result.message)
+      return
+    }
+    stat.oaStatus = status
+    stat.oaStatusName = DmcAuditWflowStatCodes.OaStatusNames['s' + status]
   }
 
 }

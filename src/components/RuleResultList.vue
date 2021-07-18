@@ -1,4 +1,6 @@
 <template>
+  <el-page-header @back="goback" content="规则执行详情 & 发送OA" class="page-header"></el-page-header>
+
   <div class="flex-bar">
     <el-form :inline="true" class="filter-form">
       <el-form-item label="规则显示">
@@ -684,11 +686,19 @@ export default class RuleResultList extends Vue {
     }
   }
 
+  goback(): void {
+    window.history.back()
+  }
+
 }
 
 </script>
 
 <style lang="scss" scoped>
+
+.page-header {
+  margin-bottom: 2em;
+}
 
 .el-radio {
   margin-right: 15px;
