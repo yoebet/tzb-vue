@@ -17,25 +17,33 @@
     </el-table-column>
     <el-table-column v-for="col in columns"
                      :prop="col.code"
-                     :label="col.name"
                      :key="col">
+      <template #header>
+        <span v-if="col.code!==col.name">{{ col.code }}<br></span>
+        {{ col.name }}
+      </template>
     </el-table-column>
   </el-table>
 </template>
 
 <script lang="ts">
 import {Vue, Options} from "vue-class-component";
-import {getSampleErrordata} from "@/api/task-result-api";
+import {getSampleErrordata, getStructFields} from "@/api/task-result-api";
 import {ColHeader, DataRow, DmcTaskResultErrordata} from "@/models/dmc-task-result-errordata";
+import {DmcAuditRuleResult} from "@/models/dmc-audit-rule-result";
+import {MetaStructField} from "@/models/meta-struct-field";
 
 
 @Options({
   props: {
-    oid: String
+    ruleResult: {sampleErrorDataOid: String},
+    structsMap: Map
   }
 })
 export default class SampleErrordataList extends Vue {
-  oid!: string
+  ruleResult!: DmcAuditRuleResult
+  // structId -> (fieldCode -> field)
+  structsMap!: Map<string, (Map<string, MetaStructField>)>
 
   columns: ColHeader[] = []
   dataRows: DataRow[] = []
@@ -46,11 +54,15 @@ export default class SampleErrordataList extends Vue {
   }
 
   async fetchData(): Promise<void> {
-    if (!this.oid) {
+    if (!this.ruleResult) {
+      return
+    }
+    const sampleErrorDataOid = this.ruleResult.sampleErrorDataOid
+    if (!sampleErrorDataOid) {
       return
     }
     this.tableDataLoading = true
-    const sampleData: DmcTaskResultErrordata = await getSampleErrordata(this.oid)
+    const sampleData: DmcTaskResultErrordata = await getSampleErrordata(sampleErrorDataOid)
     this.tableDataLoading = false
 
     let colCodes: string[]
@@ -71,6 +83,28 @@ export default class SampleErrordataList extends Vue {
       })
       return row
     })
+
+    const structId = this.ruleResult.tab.structId
+    let fieldsMap: Map<string, MetaStructField> | undefined = this.structsMap.get(structId)
+    if (!fieldsMap) {
+      let fields: MetaStructField[] = await getStructFields(structId)
+      if (!fields) {
+        fields = []
+      }
+      fieldsMap = new Map<string, MetaStructField>()
+      for (const field of fields) {
+        fieldsMap.set(field.fieldCode, field)
+      }
+      this.structsMap.set(structId, fieldsMap)
+    }
+
+    this.columns.forEach(column => {
+      const field: MetaStructField | undefined = (fieldsMap as Map<string, MetaStructField>).get(column.code)
+      if (field) {
+        column.name = field.fieldName
+      }
+    })
+
   }
 
 

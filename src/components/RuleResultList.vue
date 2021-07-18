@@ -115,7 +115,8 @@
             prop="sampleErrorDataOid"
             label="数据">
           <template #default="scope">
-            <sample-errordata-list :oid="scope.row.sampleErrorDataOid"
+            <sample-errordata-list :rule-result="scope.row"
+                                   :structs-map="structsMap"
                                    v-if="scope.row.sampleErrorDataOid"></sample-errordata-list>
           </template>
         </el-table-column>
@@ -216,7 +217,8 @@
             prop="sampleErrorDataOid"
             label="数据">
           <template #default="scope">
-            <sample-errordata-list :oid="scope.row.sampleErrorDataOid"
+            <sample-errordata-list :rule-result="scope.row"
+                                   :structs-map="structsMap"
                                    v-if="scope.row.sampleErrorDataOid"></sample-errordata-list>
           </template>
         </el-table-column>
@@ -342,6 +344,7 @@ import {sendOa} from "@/api/send-oa-api";
 import {Result} from "@/models/result";
 import SentOaRecordList from "@/components/SentOaRecordList.vue";
 import SampleErrordataList from "@/components/SampleErrordataList.vue";
+import {MetaStructField} from "@/models/meta-struct-field";
 
 interface CollapseGroup {
   code: string,
@@ -434,6 +437,9 @@ export default class RuleResultList extends Vue {
 
   depRuleRelsMap: Map<string, DepRuleRel> = new Map<string, DepRuleRel>()
   depRuleRels: DepRuleRel[] = []
+
+  // structId -> (fieldCode -> field)
+  structsMap: Map<string, (Map<string, MetaStructField>)> = new Map<string, Map<string, MetaStructField>>()
 
   tableDataLoading = false
   private runOid = ''

@@ -3,7 +3,7 @@ import {Model} from "@/models/model";
 export interface ColHeader {
   index: number
   code: string
-  name?: string
+  name: string
 }
 
 export interface DataRow {
