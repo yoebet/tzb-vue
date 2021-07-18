@@ -217,11 +217,24 @@
   </el-collapse>
 
   <div class="sent-oa-box">
+
+    <el-collapse model-value="oa-records" class="expand-tables oa-sent-records">
+      <el-collapse-item name="oa-records">
+        <template #title>
+          <div class="sent-records-title-bar">OA发送记录</div>
+        </template>
+
+        <sent-oa-record-list :run-oid="runOid" ref="oaRecordListComponent"></sent-oa-record-list>
+
+      </el-collapse-item>
+    </el-collapse>
+
     <div class="sent-oa-title-bar">发送OA</div>
 
     <el-table
         :data="depRuleRels"
         class="deps-table"
+        empty-text="请选择部门"
         style="width: 100%">
       <el-table-column
           type="index"
@@ -271,7 +284,7 @@
     </el-table>
 
     <div align="right" class="sent-oa-box-bb">
-      <el-button type="primary" @click="sentOa">发送OA</el-button>
+      <el-button type="primary" @click="sentOa" :disabled="depRuleRels.length===0">发送OA</el-button>
     </div>
   </div>
 
@@ -280,7 +293,7 @@
 </template>
 
 <script lang="ts">
-import {Vue} from "vue-class-component";
+import {Options, Vue} from "vue-class-component";
 import {getAuditRuleResults} from "@/api/etl-wflow-run-api";
 import {DmcAuditRuleResult, DmcAuditRuleResultCodes as Codes} from "@/models/dmc-audit-rule-result";
 import {Department} from "@/models/department";
@@ -290,6 +303,7 @@ import {DmcAuditSentOa} from "@/models/dmc-audit-sent-oa";
 import {DmcAuditSentOaDep} from "@/models/dmc-audit-sent-oa-dep";
 import {sendOa} from "@/api/send-oa-api";
 import {Result} from "@/models/result";
+import SentOaRecordList from "@/components/SentOaRecordList.vue";
 
 interface CollapseGroup {
   code: string,
@@ -307,7 +321,14 @@ interface DepRuleRel {
 }
 
 
+@Options({
+  components: {
+    SentOaRecordList
+  }
+})
 export default class RuleResultList extends Vue {
+  // oaRecordListComponent:SentOaRecordList
+
   allRuleData: DmcAuditRuleResult[] | null = null
   errorRuleData: DmcAuditRuleResult[] | null = null
   errorRuleDataMap: Map<string, DmcAuditRuleResult> = new Map<string, DmcAuditRuleResult>()
@@ -372,6 +393,7 @@ export default class RuleResultList extends Vue {
   ]
   depsMap: Map<string, Department> = new Map<string, Department>()
   depsNameMap: Map<string, Department> = new Map<string, Department>()
+  usersMap: Map<string, User> = new Map<string, User>()
 
   depRuleRelsMap: Map<string, DepRuleRel> = new Map<string, DepRuleRel>()
   depRuleRels: DepRuleRel[] = []
@@ -380,8 +402,6 @@ export default class RuleResultList extends Vue {
   private runOid = ''
   private collapseNames: string[] | null = null
   private resdResultStatus = -2
-
-  private oaRemark = ''
 
   groupRules(ruleResults: DmcAuditRuleResult[],
              collapseNamePrefix: string,
@@ -448,6 +468,9 @@ export default class RuleResultList extends Vue {
     // this.deps = await getDepartments()
     this.depsMap = new Map<string, Department>(this.deps.map(dep => [dep.orgId, dep]))
     this.depsNameMap = new Map<string, Department>(this.deps.map(dep => [dep.orgName, dep]))
+    this.deps.forEach(dep => {
+      dep.users.forEach(user => this.usersMap.set(user.userId, user))
+    })
   }
 
   async fetchData(): Promise<void> {
@@ -603,19 +626,25 @@ export default class RuleResultList extends Vue {
       return
     }
 
+    let allSelected: DmcAuditRuleResult[] = []
+
     const sentOaDeps: DmcAuditSentOaDep[] = depRuleRels.map(drr => {
 
       const errorRuleResults = Array.from(drr.ruleResultIds)
           .map(rid => this.errorRuleDataMap.get(rid)) as DmcAuditRuleResult[]
+      allSelected = allSelected.concat(errorRuleResults)
+
       const rr0: DmcAuditRuleResult | undefined = errorRuleResults.find(rr => rr.tab.accountTime)
       const accountTime: string = rr0 ? rr0.tab.accountTime : ''
       const tableCount = new Set<string>(errorRuleResults.map(rr => rr.tab.tabCode)).size
+      const toUser = this.usersMap.get(drr.userId)
 
       const dep = drr.dep
       const oaDep: DmcAuditSentOaDep = {
         depId: dep.orgId,
         depName: dep.orgName,
         userId: drr.userId,
+        userName: toUser ? toUser.userName : '',
         remark: drr.remark,
         failedRulesCount: drr.ruleResultIds.size,
         accountTime,
@@ -629,22 +658,30 @@ export default class RuleResultList extends Vue {
       wflowRunOid: this.runOid,
       sentOaDeps
     }
-
-    console.log(sentOa)
+    // console.log(sentOa)
 
     const result: Result<DmcAuditSentOa> = await sendOa(sentOa.wflowRunOid, sentOa)
     if (result.code !== 0) {
       alert(result.message)
       return
     }
-
     const newRecord: DmcAuditSentOa | undefined = result.data
     if (!newRecord) {
       alert('发送失败')
       return
     }
 
-    console.log(newRecord)
+    // console.log(newRecord)
+    alert('发送成功')
+
+    const oaRecordListComponent: SentOaRecordList = this.$refs.oaRecordListComponent as SentOaRecordList
+    oaRecordListComponent.append(newRecord)
+    this.depRuleRels.splice(0, this.depRuleRels.length)
+    this.depRuleRelsMap.clear()
+    for (const rr of allSelected) {
+      rr.sendToDep = []
+      rr.sendToDepLast = []
+    }
   }
 
 }
@@ -674,6 +711,17 @@ export default class RuleResultList extends Vue {
 .sent-oa-box {
   margin-top: 50px;
   margin-bottom: 50px;
+  width: 90%;
+
+  .oa-sent-records {
+    margin-bottom: 50px;
+
+    .sent-records-title-bar {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+  }
 
   .sent-oa-title-bar {
     font-size: 1.1em;

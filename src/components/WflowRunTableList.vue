@@ -3,7 +3,8 @@
   <el-table
       :data="tableData"
       v-loading="tableDataLoading"
-      style="width: 100%">
+      stripe
+      size="medium">
     <el-table-column
         type="index"
         align="right"

@@ -96,7 +96,7 @@ import {Page} from "@/api/page";
 import {getEtlWflowRuns} from "@/api/etl-wflow-run-api";
 import {EtlWflowRun, EtlWflowRunCodes, EtlWflowRunFilter} from "@/models/etl-wflow-run";
 import moment from 'moment';
-import {DateTimeFormat, DateFormat, DateShortcuts} from "@/config";
+import {DateTimeHMSFormat, DateFormat, DateShortcuts} from "@/config";
 import {timeElapseLabel} from "@/helper";
 
 export default class EtlWflowRunList extends Vue {
@@ -119,7 +119,7 @@ export default class EtlWflowRunList extends Vue {
 
       if (wf.startTime) {
         const st = moment(+wf.startTime)
-        wf.startTimeLabel = st.format(DateTimeFormat)
+        wf.startTimeLabel = st.format(DateTimeHMSFormat)
       }
       wf.timeElapse = timeElapseLabel(wf.startTime, wf.endTime)
     })

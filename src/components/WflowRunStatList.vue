@@ -37,6 +37,7 @@
 
   <el-table
       :data="tableData"
+      stripe
       v-loading="tableDataLoading"
       :default-sort="{prop: 'startTimeLabel', order: 'descending'}"
       @sort-change="sortData"
@@ -45,18 +46,13 @@
     <el-table-column type="expand" column-key="expand">
       <template #default="scope">
 
-        <el-collapse :model-value="['tab-list','oa-records']" :accordion="false">
+        <el-collapse :model-value="['tab-list','oa-records']" :accordion="false" class="expand-tables">
           <el-collapse-item name="tab-list" title="数据表">
             <wflow-run-table-list :run-oid="scope.row.wflowRunOid"></wflow-run-table-list>
           </el-collapse-item>
 
-          <el-collapse-item name="oa-records" title="OA发送">
-            <ul>
-              <li>部门1 &nbsp; <span class="sent-rules-count">3</span></li>
-              <li>部门2 &nbsp; <span class="sent-rules-count">8</span></li>
-              <li>部门3 &nbsp; <span class="sent-rules-count">12</span></li>
-            </ul>
-            <div>审批意见：xxx</div>
+          <el-collapse-item name="oa-records" title="OA发送记录">
+            <sent-oa-record-list :run-oid="scope.row.wflowRunOid"></sent-oa-record-list>
           </el-collapse-item>
         </el-collapse>
 
@@ -170,13 +166,15 @@ import {Page} from "@/api/page";
 import {getWflowRunStats} from "@/api/etl-wflow-run-api";
 import {EtlWflowRun, EtlWflowRunCodes as Codes, EtlWflowRunFilter} from "@/models/etl-wflow-run";
 import moment from 'moment';
-import {DateFormat, DateShortcuts, DateTimeFormat} from "@/config";
+import {DateFormat, DateShortcuts, DateTimeHMSFormat} from "@/config";
 import {timeElapseLabel} from "@/helper";
 import {DmcAuditWflowStat, DmcAuditWflowStatCodes} from "@/models/dmc-audit-wflow-stat";
 import WflowRunTableList from "@/components/WflowRunTableList.vue";
+import SentOaRecordList from "@/components/SentOaRecordList.vue";
 
 @Options({
   components: {
+    SentOaRecordList,
     WflowRunTableList
   }
 })
@@ -213,7 +211,7 @@ export default class WflowRunStatList extends Vue {
 
       if (wf.startTime) {
         const st = moment(+wf.startTime)
-        wf.startTimeLabel = st.format(DateTimeFormat)
+        wf.startTimeLabel = st.format(DateTimeHMSFormat)
       }
       wf.timeElapse = timeElapseLabel(wf.startTime, wf.endTime)
 
@@ -313,21 +311,8 @@ export default class WflowRunStatList extends Vue {
   color: green;
 }
 
-.expand-block {
-  margin-top: 1em;
-
-  .block-title {
-    font-weight: bold;
-  }
-
-  li {
-    list-style: none;
-  }
-
-  .sent-rules-count {
-    font-weight: bold;
-    color: #108ee9;
-  }
+.expand-tables {
+  width: 90%;
 }
 
 

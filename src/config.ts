@@ -1,6 +1,7 @@
 const DefaultPageSize = 10
 const DateFormat = 'YYYY-MM-DD'
-const DateTimeFormat = 'YYYY-MM-DD HH:mm:ss'
+const DateTimeHMFormat = 'YYYY-MM-DD HH:mm'
+const DateTimeHMSFormat = 'YYYY-MM-DD HH:mm:ss'
 
 const dayMills = 3600 * 1000 * 24
 
@@ -25,7 +26,8 @@ const DateShortcuts = [{
 
 export {
   DateFormat,
-  DateTimeFormat,
+  DateTimeHMFormat,
+  DateTimeHMSFormat,
   DateShortcuts,
   DefaultPageSize
 }

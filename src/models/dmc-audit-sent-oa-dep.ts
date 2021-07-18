@@ -7,6 +7,8 @@ export interface DmcAuditSentOaDep {
   depId: string
   depName: string
   userId: string
+  userName: string
+
   tableCount: number
   failedRulesCount: number
   remark: string
