@@ -148,7 +148,7 @@
         label="操作">
       <template #default="scope">
         <el-button @click="terminateStatus(scope.row)" v-if="scope.row.oaStatus!=='d'">终结</el-button>
-        <el-button @click="undoTerminateStatus(scope.row)" v-else>撤销</el-button>
+        <el-button @click="undoTerminateStatus(scope.row)" v-else>回退</el-button>
         &nbsp;
         <router-link :to="'/wflow-rules/'+scope.row.wflowRunOid" v-if="scope.row.ruleCount>0">
           <el-button type="primary">执行详情</el-button>
@@ -182,6 +182,7 @@ import {DmcAuditWflowStat, DmcAuditWflowStatCodes} from "@/models/dmc-audit-wflo
 import WflowRunTableList from "@/components/WflowRunTableList.vue";
 import SentOaRecordList from "@/components/SentOaRecordList.vue";
 import {Result} from "@/models/result";
+import {nextTick} from "vue";
 
 @Options({
   components: {
@@ -292,7 +293,7 @@ export default class WflowRunStatList extends Vue {
   }
 
   async undoTerminateStatus(stat: DmcAuditWflowStat): Promise<void> {
-    if (!confirm('要撤销“终结”状态吗？')) {
+    if (!confirm('要从“终结”状态回退吗？')) {
       return
     }
     await this.setOaStatus(stat, stat.oaSentCount > 0 ? 's' : 'i')

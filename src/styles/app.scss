@@ -32,7 +32,7 @@
       }
 
       .el-collapse-item__wrap {
-         border-bottom: none;
+        border-bottom: none;
       }
     }
   }
@@ -53,4 +53,19 @@
 
 td.failed-rules-count {
   color: indianred;
+}
+
+.el-table__expand-column.no-expand .cell {
+  display: none;
+}
+
+.el-table__expand-column.expandable .cell {
+
+  .el-table__expand-icon {
+    color: indianred;
+
+    .el-icon {
+      font-weight: bold;
+    }
+  }
 }

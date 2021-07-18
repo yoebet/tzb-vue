@@ -25,7 +25,6 @@
     </div>
   </div>
 
-  <!--  <el-divider></el-divider>-->
 
   <el-collapse v-model="collapseNames" :accordion="false" class="rules-accordions">
     <el-collapse-item :name="'s-'+group.code" v-for="group in sGroups" :key="group.code">
@@ -42,6 +41,8 @@
       <el-table
           :data="group.tableData"
           stripe
+          :cell-class-name="cellClassName"
+          row-key="resdOid"
           style="width: 100%">
         <!--        <el-table-column
                     sortable
@@ -65,11 +66,36 @@
             sortable
             prop="ruleName"
             class-name="rule-name"
-            min-width="250"
+            min-width="150"
             label="规则名">
         </el-table-column>
         <el-table-column
             sortable
+            prop="fieldCode"
+            label="源字段">
+          <template #default="scope">
+            {{ scope.row.fieldCode }} <br>
+            {{ scope.row.fieldName }}
+          </template>
+        </el-table-column>
+        <el-table-column
+            sortable
+            width="160"
+            prop="stdFieldCode"
+            label="标准字段">
+          <template #default="scope">
+            {{ scope.row.stdFieldCode }} <br>
+            {{ scope.row.stdFieldName }}
+          </template>
+        </el-table-column>
+        <el-table-column
+            sortable
+            prop="stdDepName"
+            label="管理部门">
+        </el-table-column>
+        <el-table-column
+            sortable
+            width="80"
             prop="resdResultName"
             class-name="result-status"
             label="结果">
@@ -80,27 +106,21 @@
           </template>
         </el-table-column>
         <el-table-column
-            sortable
-            prop="fieldCode"
-            label="源字段">
+            min-width="200"
+            prop="resdResultDesc"
+            label="错误信息">
+        </el-table-column>
+        <el-table-column
+            type="expand"
+            prop="sampleErrorDataOid"
+            label="数据">
           <template #default="scope">
-            {{ scope.row.fieldCode }} {{ scope.row.fieldName }}
+            <sample-errordata-list :oid="scope.row.sampleErrorDataOid"
+                                   v-if="scope.row.sampleErrorDataOid"></sample-errordata-list>
           </template>
         </el-table-column>
         <el-table-column
-            sortable
-            prop="stdFieldCode"
-            label="标准字段">
-          <template #default="scope">
-            {{ scope.row.stdFieldCode }} {{ scope.row.stdFieldName }}
-          </template>
-        </el-table-column>
-        <el-table-column
-            sortable
-            prop="stdDepName"
-            label="管理部门">
-        </el-table-column>
-        <el-table-column
+            min-width="150"
             prop="sendToDep"
             label="发送部门">
           <template #header>
@@ -146,6 +166,7 @@
       <el-table
           :data="group.tableData"
           stripe
+          :cell-class-name="cellClassName"
           row-key="resdOid"
           style="width: 100%">
         <el-table-column
@@ -175,6 +196,7 @@
         </el-table-column>
         <el-table-column
             sortable
+            width="80"
             prop="resdResultName"
             class-name="result-status"
             label="结果">
@@ -185,6 +207,21 @@
           </template>
         </el-table-column>
         <el-table-column
+            min-width="200"
+            prop="resdResultDesc"
+            label="错误信息">
+        </el-table-column>
+        <el-table-column
+            type="expand"
+            prop="sampleErrorDataOid"
+            label="数据">
+          <template #default="scope">
+            <sample-errordata-list :oid="scope.row.sampleErrorDataOid"
+                                   v-if="scope.row.sampleErrorDataOid"></sample-errordata-list>
+          </template>
+        </el-table-column>
+        <el-table-column
+            min-width="150"
             prop="sendToDep"
             label="发送部门">
           <template #header>
@@ -290,8 +327,6 @@
     </div>
   </div>
 
-  <!--  <el-divider></el-divider>-->
-
 </template>
 
 <script lang="ts">
@@ -306,6 +341,7 @@ import {DmcAuditSentOaDep} from "@/models/dmc-audit-sent-oa-dep";
 import {sendOa} from "@/api/send-oa-api";
 import {Result} from "@/models/result";
 import SentOaRecordList from "@/components/SentOaRecordList.vue";
+import SampleErrordataList from "@/components/SampleErrordataList.vue";
 
 interface CollapseGroup {
   code: string,
@@ -325,12 +361,11 @@ interface DepRuleRel {
 
 @Options({
   components: {
-    SentOaRecordList
+    SentOaRecordList,
+    SampleErrordataList
   }
 })
 export default class RuleResultList extends Vue {
-  // oaRecordListComponent:SentOaRecordList
-
   allRuleData: DmcAuditRuleResult[] | null = null
   errorRuleData: DmcAuditRuleResult[] | null = null
   errorRuleDataMap: Map<string, DmcAuditRuleResult> = new Map<string, DmcAuditRuleResult>()
@@ -505,6 +540,12 @@ export default class RuleResultList extends Vue {
       if (!wf.resdResultName && wf.resdExecStatus === 4) {
         wf.resdResultName = '执行错误'
       }
+      if (wf.resdExecStatus === 4) {
+        wf.resdResultDesc = ''
+      }
+      if (wf.resdResultDesc) {
+        wf.resdResultDesc = wf.resdResultDesc.replace('数据错误,', '数据错误，')
+      }
 
       if (wf.xsRule && wf.stdDepId) {
         const dep = this.depsMap.get(wf.stdDepId) || this.depsNameMap.get(wf.stdDepName)
@@ -521,6 +562,13 @@ export default class RuleResultList extends Vue {
     } else {
       this.errorRuleData = list
     }
+  }
+
+  cellClassName({row, column}: { row: DmcAuditRuleResult, column: any }): string {
+    if (column.property === 'sampleErrorDataOid') {
+      return row.sampleErrorDataOid ? 'expandable' : 'no-expand'
+    }
+    return ''
   }
 
   async filterChange(vv: any): Promise<void> {
