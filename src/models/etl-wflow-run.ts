@@ -26,6 +26,8 @@ export interface EtlWflowRun extends Model {
   // 流程开始时间
   startTime: string
 
+  startTimeLabel?: string
+
   // 流程结束时间
   endTime: string
 
@@ -153,11 +155,10 @@ export class EtlWflowRunCodes {
 
 
 export class EtlWflowRunFilter extends Pager {
+  oid?: string
   workflowName?: string
 
   startDateFrom?: string
   startDateTo?: string
-
-  auditNodes?: boolean
 }
 

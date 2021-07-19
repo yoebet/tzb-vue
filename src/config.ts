@@ -24,10 +24,13 @@ const DateShortcuts = [{
   })(),
 }]
 
+const DefaultOaRemark = '这是本月的数据质量问题，请至数据质量管控平台查看，做好排查分析，并制定整改计划。'
+
 export {
   DateFormat,
   DateTimeHMFormat,
   DateTimeHMSFormat,
   DateShortcuts,
-  DefaultPageSize
+  DefaultPageSize,
+  DefaultOaRemark
 }

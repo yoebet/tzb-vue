@@ -7,6 +7,13 @@
         </template>
       </el-input>
     </el-form-item>
+    <el-form-item label="流程号">
+      <el-input v-model="filter.oid" placeholder="流程号">
+        <template #suffix>
+          <i class="el-input__icon el-icon-close" @click="filter.oid=''" v-if="filter.oid"></i>
+        </template>
+      </el-input>
+    </el-form-item>
     <el-form-item label="执行时间">
       <el-date-picker
           v-model="filter.startDateFrom"
@@ -182,7 +189,6 @@ import {DmcAuditWflowStat, DmcAuditWflowStatCodes} from "@/models/dmc-audit-wflo
 import WflowRunTableList from "@/components/WflowRunTableList.vue";
 import SentOaRecordList from "@/components/SentOaRecordList.vue";
 import {Result} from "@/models/result";
-import {nextTick} from "vue";
 
 @Options({
   components: {
@@ -241,7 +247,7 @@ export default class WflowRunStatList extends Vue {
   }
 
   async created(): Promise<void> {
-    this.filter.pageSize = 2
+    // this.filter.pageSize = 2
     // this.filter.workflowName = 'eas'
     await this.fetchData()
   }

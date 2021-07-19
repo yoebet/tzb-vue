@@ -1,5 +1,14 @@
 <template>
-  <el-page-header @back="goback" content="规则执行详情 & 发送OA" class="page-header"></el-page-header>
+  <el-page-header @back="goback" class="page-header">
+    <template #content>
+      <div class="page-header-content" v-if="etlWflowRun">
+        <!-- 规则执行详情 & 发送OA -->
+        流程号：<span class="run-oid">{{ etlWflowRun.oid }}</span>
+        &nbsp;&nbsp;
+        开始执行：<span class="run-start-time">{{ etlWflowRun.startTimeLabel }}</span>
+      </div>
+    </template>
+  </el-page-header>
 
   <div class="flex-bar">
     <el-form :inline="true" class="filter-form">
@@ -325,7 +334,7 @@
     </el-table>
 
     <div align="right" class="sent-oa-box-bb">
-      <el-button type="primary" @click="sentOa" :disabled="depRuleRels.length===0">发送OA</el-button>
+      <el-button type="primary" @click="sentOa" :disabled="depRuleRels.length===0" :loading="sendingOa">发送OA</el-button>
     </div>
   </div>
 
@@ -333,7 +342,7 @@
 
 <script lang="ts">
 import {Options, Vue} from "vue-class-component";
-import {getAuditRuleResults} from "@/api/etl-wflow-run-api";
+import {getAuditRuleResults, getWflowRunByOid} from "@/api/etl-wflow-run-api";
 import {DmcAuditRuleResult, DmcAuditRuleResultCodes as Codes} from "@/models/dmc-audit-rule-result";
 import {Department} from "@/models/department";
 import {getDepartments} from "@/api/user-dep-api";
@@ -345,6 +354,9 @@ import {Result} from "@/models/result";
 import SentOaRecordList from "@/components/SentOaRecordList.vue";
 import SampleErrordataList from "@/components/SampleErrordataList.vue";
 import {MetaStructField} from "@/models/meta-struct-field";
+import {DateTimeHMSFormat, DefaultOaRemark} from "@/config";
+import {EtlWflowRun} from "@/models/etl-wflow-run";
+import moment from "moment";
 
 interface CollapseGroup {
   code: string,
@@ -369,6 +381,8 @@ interface DepRuleRel {
   }
 })
 export default class RuleResultList extends Vue {
+  etlWflowRun: EtlWflowRun | undefined
+  sendingOa = false
   allRuleData: DmcAuditRuleResult[] | null = null
   errorRuleData: DmcAuditRuleResult[] | null = null
   errorRuleDataMap: Map<string, DmcAuditRuleResult> = new Map<string, DmcAuditRuleResult>()
@@ -507,7 +521,21 @@ export default class RuleResultList extends Vue {
   }
 
   async created(): Promise<void> {
+    if (this.$route.params.runOid) {
+      this.runOid = this.$route.params.runOid as string
+    }
+    if (!this.runOid) {
+      return
+    }
+    const run: EtlWflowRun = await getWflowRunByOid(this.runOid)
+    if (run.startTime) {
+      const st = moment(+run.startTime)
+      run.startTimeLabel = st.format(DateTimeHMSFormat)
+    }
+    this.etlWflowRun = run
+
     await this.fetchData()
+
     // this.deps = await getDepartments()
     this.depsMap = new Map<string, Department>(this.deps.map(dep => [dep.orgId, dep]))
     this.depsNameMap = new Map<string, Department>(this.deps.map(dep => [dep.orgName, dep]))
@@ -517,12 +545,6 @@ export default class RuleResultList extends Vue {
   }
 
   async fetchData(): Promise<void> {
-    if (this.$route.params.runOid) {
-      this.runOid = this.$route.params.runOid as string
-    }
-    if (!this.runOid) {
-      return
-    }
     this.tableDataLoading = true
     let list: DmcAuditRuleResult[] = await getAuditRuleResults(this.runOid,
         this.showAllRules ? null : this.resdResultStatus)
@@ -650,7 +672,7 @@ export default class RuleResultList extends Vue {
             dep,
             ruleResultIds: new Set<string>([ruleResultId]),
             userId: user0 ? user0.userId : '',
-            remark: '这是本月的数据质量问题，请至数据质量管控平台查看，做好排查分析，并制定整改计划。'
+            remark: DefaultOaRemark
           }
           this.depRuleRelsMap.set(depId, depRuleRel)
           this.depRuleRels.push(depRuleRel)
@@ -716,7 +738,9 @@ export default class RuleResultList extends Vue {
     }
     // console.log(sentOa)
 
+    this.sendingOa = true
     const result: Result<DmcAuditSentOa> = await sendOa(sentOa.wflowRunOid, sentOa)
+    this.sendingOa = false
     if (result.code !== 0) {
       alert(result.message)
       return
@@ -752,6 +776,13 @@ export default class RuleResultList extends Vue {
 
 .page-header {
   margin-bottom: 2em;
+
+  .page-header-content {
+
+    .run-oid, .run-start-time {
+      color: darkgreen;
+    }
+  }
 }
 
 .el-radio {

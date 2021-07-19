@@ -7,17 +7,19 @@ import {DmcAuditTab} from "@/models/dmc-audit-tab";
 import {Result} from "@/models/result";
 
 export async function getEtlWflowRuns(filter: EtlWflowRunFilter): Promise<Page<EtlWflowRun>> {
-  // base='http://localhost:8100'
-
   const paramStr = buildFilterParams(filter)
   const response = await fetch('/api/wflow-runs?' + paramStr)
   const page: Page<EtlWflowRun> = await response.json()
   return Promise.resolve(page)
 }
 
-export async function getWflowRunStats(filter: EtlWflowRunFilter): Promise<Page<DmcAuditWflowStat>> {
-  // base='http://localhost:8100'
+export async function getWflowRunByOid(oid: string): Promise<EtlWflowRun> {
+  const response = await fetch('/api/wflow-runs/' + oid)
+  const run: EtlWflowRun = await response.json()
+  return Promise.resolve(run)
+}
 
+export async function getWflowRunStats(filter: EtlWflowRunFilter): Promise<Page<DmcAuditWflowStat>> {
   const paramStr = buildFilterParams(filter)
   const response = await fetch('/api/wflow-stats?' + paramStr)
   const page: Page<DmcAuditWflowStat> = await response.json()
