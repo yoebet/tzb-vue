@@ -2,10 +2,13 @@
   <el-page-header @back="goback" class="page-header">
     <template #content>
       <div class="page-header-content" v-if="etlWflowRun">
-        <!-- 规则执行详情 & 发送OA -->
-        流程号：<span class="run-oid">{{ etlWflowRun.oid }}</span>
+        <span class="page-title">规则执行详情</span>
         &nbsp;&nbsp;
-        开始执行：<span class="run-start-time">{{ etlWflowRun.startTimeLabel }}</span>
+        流程名称：<span class="flow-prop-value">{{ etlWflowRun.workflowName }}</span>
+        &nbsp;&nbsp;
+        编号：<span class="flow-prop-value">{{ etlWflowRun.oid }}</span>
+        &nbsp;&nbsp;
+        开始执行时间：<span class="flow-prop-value">{{ etlWflowRun.startTimeLabel }}</span>
       </div>
     </template>
   </el-page-header>
@@ -80,7 +83,7 @@
         </el-table-column>
         <el-table-column
             sortable
-            prop="fieldCode"
+            :sort-method="sortByFieldCode"
             label="源字段">
           <template #default="scope">
             {{ scope.row.fieldCode }} <br>
@@ -89,8 +92,8 @@
         </el-table-column>
         <el-table-column
             sortable
+            :sort-method="sortByStdFieldCode"
             width="160"
-            prop="stdFieldCode"
             label="标准字段">
           <template #default="scope">
             {{ scope.row.stdFieldCode }} <br>
@@ -207,7 +210,6 @@
         <el-table-column
             sortable
             width="80"
-            prop="resdResultName"
             class-name="result-status"
             label="结果">
           <template #default="scope">
@@ -299,9 +301,9 @@
       <el-table-column
           width="150"
           prop="userId"
-          label="人员">
+          label="责任人">
         <template #default="scope">
-          <el-select v-model="scope.row.userId" placeholder="人员">
+          <el-select v-model="scope.row.userId" placeholder="责任人">
             <el-option
                 v-for="item in scope.row.dep.users"
                 :key="item.userId"
@@ -619,6 +621,14 @@ export default class RuleResultList extends Vue {
     }
   }
 
+  sortByFieldCode(a: DmcAuditRuleResult, b: DmcAuditRuleResult): number {
+    return (a.fieldCode || '').localeCompare(b.fieldCode || '')
+  }
+
+  sortByStdFieldCode(a: DmcAuditRuleResult, b: DmcAuditRuleResult): number {
+    return (a.stdFieldCode || '').localeCompare(b.stdFieldCode || '')
+  }
+
   removeCommon(sa: string[], sb: string[]): void {
     if (!sa || !sb || sa.length === 0 || sb.length === 0) {
       return
@@ -715,6 +725,15 @@ export default class RuleResultList extends Vue {
       const rr0: DmcAuditRuleResult | undefined = errorRuleResults.find(rr => rr.tab.accountTime)
       const accountTime: string = rr0 ? rr0.tab.accountTime : ''
       const tableCount = new Set<string>(errorRuleResults.map(rr => rr.tab.tabCode)).size
+      const rrCheckTypeStd = errorRuleResults.find(rr => !rr.xsRule)
+      const rrCheckTypeXs = errorRuleResults.find(rr => rr.xsRule)
+      let checkType = rrCheckTypeStd ? '源头稽核' : ''
+      if (rrCheckTypeXs) {
+        if (rrCheckTypeStd) {
+          checkType = checkType + '/'
+        }
+        checkType = checkType + '跨系统校验'
+      }
       const toUser = this.usersMap.get(drr.userId)
 
       const dep = drr.dep
@@ -727,12 +746,13 @@ export default class RuleResultList extends Vue {
         failedRulesCount: drr.ruleResultIds.size,
         accountTime,
         tableCount,
+        checkType
       }
       return oaDep
     })
 
     const sentOa: DmcAuditSentOa = {
-      oid: '',// be generated at backend
+      oid: '',
       wflowRunOid: this.runOid,
       sentOaDeps
     }
@@ -776,10 +796,13 @@ export default class RuleResultList extends Vue {
 
 .page-header {
   margin-bottom: 2em;
+  .page-title {
+    color: #108ee9;
+  }
 
   .page-header-content {
 
-    .run-oid, .run-start-time {
+    .flow-prop-value {
       color: darkgreen;
     }
   }

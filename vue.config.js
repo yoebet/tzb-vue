@@ -1,6 +1,6 @@
 module.exports = {
   lintOnSave: false,
-  publicPath: '/dpt/v/',
+  publicPath: '/adoa/v/',
   devServer: {
     proxy: {
       '/api': {

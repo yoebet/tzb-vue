@@ -3,6 +3,8 @@ const DateFormat = 'YYYY-MM-DD'
 const DateTimeHMFormat = 'YYYY-MM-DD HH:mm'
 const DateTimeHMSFormat = 'YYYY-MM-DD HH:mm:ss'
 
+const API_BASE_PATH = '/adoa'
+
 const dayMills = 3600 * 1000 * 24
 
 const DateShortcuts = [{
@@ -27,6 +29,7 @@ const DateShortcuts = [{
 const DefaultOaRemark = '这是本月的数据质量问题，请至数据质量管控平台查看，做好排查分析，并制定整改计划。'
 
 export {
+  API_BASE_PATH,
   DateFormat,
   DateTimeHMFormat,
   DateTimeHMSFormat,

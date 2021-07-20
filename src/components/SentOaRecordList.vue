@@ -28,7 +28,12 @@
         <el-table-column
             sortable
             prop="userName"
-            label="人员">
+            label="责任人">
+        </el-table-column>
+        <el-table-column
+            sortable
+            prop="checkType"
+            label="稽核类型">
         </el-table-column>
         <el-table-column
             sortable

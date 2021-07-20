@@ -5,29 +5,30 @@ import {DmcAuditWflowStat} from "@/models/dmc-audit-wflow-stat";
 import {DmcAuditRuleResult} from "@/models/dmc-audit-rule-result";
 import {DmcAuditTab} from "@/models/dmc-audit-tab";
 import {Result} from "@/models/result";
+import {API_BASE_PATH} from "@/config";
 
 export async function getEtlWflowRuns(filter: EtlWflowRunFilter): Promise<Page<EtlWflowRun>> {
   const paramStr = buildFilterParams(filter)
-  const response = await fetch('/api/wflow-runs?' + paramStr)
+  const response = await fetch(API_BASE_PATH + '/api/wflow-runs?' + paramStr)
   const page: Page<EtlWflowRun> = await response.json()
   return Promise.resolve(page)
 }
 
 export async function getWflowRunByOid(oid: string): Promise<EtlWflowRun> {
-  const response = await fetch('/api/wflow-runs/' + oid)
+  const response = await fetch(API_BASE_PATH + '/api/wflow-runs/' + oid)
   const run: EtlWflowRun = await response.json()
   return Promise.resolve(run)
 }
 
 export async function getWflowRunStats(filter: EtlWflowRunFilter): Promise<Page<DmcAuditWflowStat>> {
   const paramStr = buildFilterParams(filter)
-  const response = await fetch('/api/wflow-stats?' + paramStr)
+  const response = await fetch(API_BASE_PATH + '/api/wflow-stats?' + paramStr)
   const page: Page<DmcAuditWflowStat> = await response.json()
   return Promise.resolve(page)
 }
 
 export async function setWflowOaStatus(runOid: string, status: string): Promise<Result<never>> {
-  const response = await fetch(`/api/wflow-stats/oa-status/${runOid}/${status}`,
+  const response = await fetch(API_BASE_PATH + `/api/wflow-stats/oa-status/${runOid}/${status}`,
     {
       method: 'post',
       headers: {'content-type': 'application/json'}
@@ -38,7 +39,7 @@ export async function setWflowOaStatus(runOid: string, status: string): Promise<
 
 
 export async function getAuditTabStats(runOid: string): Promise<DmcAuditTab[]> {
-  const response = await fetch(`/api/audit-mat/wfrun-tabs/${runOid}`)
+  const response = await fetch(API_BASE_PATH + `/api/audit-mat/wfrun-tabs/${runOid}`)
   const page: DmcAuditTab[] = await response.json()
   return Promise.resolve(page)
 }
@@ -49,7 +50,7 @@ export async function getAuditRuleResults(runOid: string,
   if (resdResultStatus) {
     url += '?resdResultStatus=' + resdResultStatus
   }
-  const response = await fetch(url)
+  const response = await fetch(API_BASE_PATH + url)
   const page: DmcAuditRuleResult[] = await response.json()
   return Promise.resolve(page)
 }

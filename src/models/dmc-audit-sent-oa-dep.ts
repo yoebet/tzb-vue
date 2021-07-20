@@ -1,7 +1,6 @@
 export interface DmcAuditSentOaDep {
   wflowRunOid?: string
   sentOaOid?: string
-
   oid?: string
 
   depId: string
@@ -9,6 +8,7 @@ export interface DmcAuditSentOaDep {
   userId: string
   userName: string
 
+  checkType: string
   tableCount: number
   failedRulesCount: number
   remark: string

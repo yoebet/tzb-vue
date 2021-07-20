@@ -9,28 +9,29 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     name: 'Home',
-    component: Home
+    redirect: '/wflow-stats'
+    // component: Home
   },
-  {
-    path: '/task-results',
-    name: 'TaskResults',
-    component: TaskResultList
-  },
-  {
-    path: '/wflow-runs',
-    name: 'WflowRuns',
-    component: EtlWflowRunList
-  },
+  // {
+  //   path: '/task-results',
+  //   name: 'TaskResults',
+  //   component: TaskResultList
+  // },
+  // {
+  //   path: '/wflow-runs',
+  //   name: 'WflowRuns',
+  //   component: EtlWflowRunList
+  // },
   {
     path: '/wflow-stats',
     name: 'WflowStats',
     component: WflowRunStatList
   },
-  {
-    path: '/wflow-rules',
-    name: 'RuleResults',
-    component: RuleResultList
-  },
+  // {
+  //   path: '/wflow-rules',
+  //   name: 'RuleResults',
+  //   component: RuleResultList
+  // },
   {
     path: '/wflow-rules/:runOid',
     name: 'RuleResults',
