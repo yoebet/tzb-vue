@@ -1,6 +1,6 @@
 import {DmcAuditTab} from "@/models/dmc-audit-tab";
 
-export interface DmcAuditTabTask extends DmcAuditTab{
+export interface DmcAuditTabTask extends DmcAuditTab {
 
   runResOid: string
 

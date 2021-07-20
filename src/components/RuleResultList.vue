@@ -317,7 +317,7 @@
           prop="ruleResultIds.size"
           label="涉及规则数">
         <template #default="scope">
-          <span class="dep-rules-count">{{ scope.row.ruleResultIds.size }}</span>
+          <span :class="scope.row.ruleResultIds.size>0? 'dep-rules-count':''">{{ scope.row.ruleResultIds.size }}</span>
         </template>
       </el-table-column>
       <el-table-column
@@ -393,60 +393,7 @@ export default class RuleResultList extends Vue {
   sGroups: CollapseGroup[] = []
   xGroups: CollapseGroup[] = []
 
-  deps: Department[] = [
-    {
-      orgId: "151351", orgName: "存款业务部",
-      users: [
-        {userId: "101011", loginId: "1104", userName: "1104"},
-        {userId: "101012", loginId: "1753", userName: "陈莎"},
-        {userId: "101013", loginId: "10919", userName: "崔旭"},
-        {userId: "101014", loginId: "3010", userName: "尹海斌"},
-        {userId: "101015", loginId: "0525", userName: "高峰"},
-        {userId: "101016", loginId: "1125", userName: "陈旭"},
-        {userId: "101017", loginId: "9022", userName: "金曦巧"},
-        {userId: "101018", loginId: "9212", userName: "梁阳勇"},
-        {userId: "101019", loginId: "0433", userName: "林菊红"},
-        {userId: "101020", loginId: "0521", userName: "王海燕"},
-        {userId: "101021", loginId: "1761", userName: "胡国华"},]
-    },
-    {
-      orgId: "65321", orgName: "计划财务部",
-      users: [
-        {userId: "101034", loginId: "1894", userName: "张荣生"},
-        {userId: "101035", loginId: "14498", userName: "方梦兰"},
-        {userId: "101036", loginId: "6087", userName: "潘王通"},
-        {userId: "101037", loginId: "0084", userName: "陈红"},
-        {userId: "101038", loginId: "0406", userName: "林永胜"},
-        {userId: "101039", loginId: "1771", userName: "刘丁丁"},
-        {userId: "101040", loginId: "0257", userName: "施露莎"},
-        {userId: "101041", loginId: "2298", userName: "罗巧"},
-        {userId: "101042", loginId: "10042", userName: "应赛赛"},
-        {userId: "101043", loginId: "1363", userName: "李双双"},
-        {userId: "101044", loginId: "5130", userName: "邱莉莎"},
-        {userId: "101045", loginId: "3070", userName: "金梦霞"},
-        {userId: "101046", loginId: "1660", userName: "官庆平"},
-        {userId: "101047", loginId: "13722", userName: "倪政"},
-        {userId: "101048", loginId: "1895", userName: "韩伟"},
-        {userId: "101049", loginId: "zxm", userName: "zxm"},
-        {userId: "101050", loginId: "14012", userName: "胡亦洲"}
-      ]
-    },
-    {
-      orgId: "52313", orgName: "信贷部",
-      users: [
-        {userId: "101023", loginId: "0771", userName: "林赛金"},
-        {userId: "101024", loginId: "9655", userName: "刘雅琪"},
-        {userId: "101025", loginId: "3406", userName: "林隽"},
-        {userId: "101026", loginId: "5670", userName: "叶婷婷"},
-        {userId: "101027", loginId: "15699", userName: "郭欢敏"},
-        {userId: "101028", loginId: "4379", userName: "陈禹锘"},
-        {userId: "101029", loginId: "9405", userName: "王献梓"},
-        {userId: "101030", loginId: "3362", userName: "曹家瑜"},
-        {userId: "101032", loginId: "4134", userName: "张敏"},
-        {userId: "101033", loginId: "2011", userName: "陈建霖"},
-      ]
-    }
-  ]
+  deps: Department[] = []
   depsMap: Map<string, Department> = new Map<string, Department>()
   depsNameMap: Map<string, Department> = new Map<string, Department>()
   usersMap: Map<string, User> = new Map<string, User>()
@@ -538,7 +485,7 @@ export default class RuleResultList extends Vue {
 
     await this.fetchData()
 
-    // this.deps = await getDepartments()
+    this.deps = await getDepartments()
     this.depsMap = new Map<string, Department>(this.deps.map(dep => [dep.orgId, dep]))
     this.depsNameMap = new Map<string, Department>(this.deps.map(dep => [dep.orgName, dep]))
     this.deps.forEach(dep => {
@@ -796,6 +743,7 @@ export default class RuleResultList extends Vue {
 
 .page-header {
   margin-bottom: 2em;
+
   .page-title {
     color: #108ee9;
   }
