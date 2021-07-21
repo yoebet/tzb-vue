@@ -6,7 +6,7 @@
         &nbsp;&nbsp;
         流程名称：<span class="flow-prop-value">{{ etlWflowRun.workflowName }}</span>
         &nbsp;&nbsp;
-        编号：<span class="flow-prop-value">{{ etlWflowRun.oid }}</span>
+        编号：<span class="flow-prop-value">{{ etlWflowRun.oid.substr(0, 16) }}</span>
         &nbsp;&nbsp;
         开始执行时间：<span class="flow-prop-value">{{ etlWflowRun.startTimeLabel }}</span>
       </div>
@@ -300,15 +300,15 @@
       </el-table-column>
       <el-table-column
           width="150"
-          prop="userId"
+          prop="loginId"
           label="责任人">
         <template #default="scope">
-          <el-select v-model="scope.row.userId" placeholder="责任人">
+          <el-select v-model="scope.row.loginId" placeholder="责任人">
             <el-option
                 v-for="item in scope.row.dep.users"
-                :key="item.userId"
+                :key="item.loginId"
                 :label="item.userName"
-                :value="item.userId">
+                :value="item.loginId">
             </el-option>
           </el-select>
         </template>
@@ -370,7 +370,7 @@ interface CollapseGroup {
 
 interface DepRuleRel {
   dep: Department
-  userId: string
+  loginId: string
   remark: string
   ruleResultIds: Set<string>
 }
@@ -489,7 +489,7 @@ export default class RuleResultList extends Vue {
     this.depsMap = new Map<string, Department>(this.deps.map(dep => [dep.orgId, dep]))
     this.depsNameMap = new Map<string, Department>(this.deps.map(dep => [dep.orgName, dep]))
     this.deps.forEach(dep => {
-      dep.users.forEach(user => this.usersMap.set(user.userId, user))
+      dep.users.forEach(user => this.usersMap.set(user.loginId, user))
     })
   }
 
@@ -628,7 +628,7 @@ export default class RuleResultList extends Vue {
           depRuleRel = {
             dep,
             ruleResultIds: new Set<string>([ruleResultId]),
-            userId: user0 ? user0.userId : '',
+            loginId: user0 ? user0.loginId : '',
             remark: DefaultOaRemark
           }
           this.depRuleRelsMap.set(depId, depRuleRel)
@@ -647,7 +647,7 @@ export default class RuleResultList extends Vue {
     }
     for (const drr of depRuleRels) {
       const depName = drr.dep.orgName
-      if (!drr.userId) {
+      if (!drr.loginId) {
         alert(`（${depName}）未指定人员`)
         return
       }
@@ -681,13 +681,13 @@ export default class RuleResultList extends Vue {
         }
         checkType = checkType + '跨系统校验'
       }
-      const toUser = this.usersMap.get(drr.userId)
+      const toUser = this.usersMap.get(drr.loginId)
 
       const dep = drr.dep
       const oaDep: DmcAuditSentOaDep = {
         depId: dep.orgId,
         depName: dep.orgName,
-        userId: drr.userId,
+        userId: drr.loginId,
         userName: toUser ? toUser.userName : '',
         remark: drr.remark,
         failedRulesCount: drr.ruleResultIds.size,

@@ -5,7 +5,7 @@ export interface DmcAuditSentOaDep {
 
   depId: string
   depName: string
-  userId: string
+  userId: string // loginId
   userName: string
 
   checkType: string
