@@ -2,7 +2,7 @@ import {User} from "@/models/user";
 
 export interface Department {
 
-  orgId: string
+  orgId: number
 
   orgName: string
 

@@ -1,5 +1,5 @@
 export interface User {
-  userId: string
+  userId: number
 
   loginId: string
 
