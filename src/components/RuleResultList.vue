@@ -144,7 +144,7 @@
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item v-for="dep in deps" :key="dep.orgId" @click="setUniDepartment(group.tableData,dep)">
+                  <el-dropdown-item v-for="dep in deps" :key="dep.orgid" @click="setUniDepartment(group.tableData,dep)">
                     {{ dep.orgName }}
                   </el-dropdown-item>
                 </el-dropdown-menu>
@@ -156,9 +156,9 @@
                        @change="depSelectChanged(scope.row)">
               <el-option
                   v-for="item in deps"
-                  :key="item.orgId"
+                  :key="item.orgid"
                   :label="item.orgName"
-                  :value="item.orgId">
+                  :value="item.orgid">
               </el-option>
             </el-select>
           </template>
@@ -245,7 +245,7 @@
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item v-for="dep in deps" :key="dep.orgId" @click="setUniDepartment(group.tableData,dep)">
+                  <el-dropdown-item v-for="dep in deps" :key="dep.orgid" @click="setUniDepartment(group.tableData,dep)">
                     {{ dep.orgName }}
                   </el-dropdown-item>
                 </el-dropdown-menu>
@@ -257,9 +257,9 @@
                        @change="depSelectChanged(scope.row)">
               <el-option
                   v-for="item in deps"
-                  :key="item.orgId"
+                  :key="item.orgid"
                   :label="item.orgName"
-                  :value="item.orgId">
+                  :value="item.orgid">
               </el-option>
             </el-select>
           </template>
@@ -300,15 +300,15 @@
       </el-table-column>
       <el-table-column
           width="150"
-          prop="loginId"
+          prop="userid"
           label="责任人">
         <template #default="scope">
-          <el-select v-model="scope.row.loginId" placeholder="责任人">
+          <el-select v-model="scope.row.userid" placeholder="责任人">
             <el-option
                 v-for="item in scope.row.dep.users"
-                :key="item.loginId"
+                :key="item.userid"
                 :label="item.userName"
-                :value="item.loginId">
+                :value="item.userid">
             </el-option>
           </el-select>
         </template>
@@ -346,7 +346,7 @@
 import {Options, Vue} from "vue-class-component";
 import {getAuditRuleResults, getWflowRunByOid} from "@/api/etl-wflow-run-api";
 import {DmcAuditRuleResult, DmcAuditRuleResultCodes as Codes} from "@/models/dmc-audit-rule-result";
-import {Department} from "@/models/department";
+import {Organ} from "@/models/organ";
 import {getDepartments} from "@/api/user-dep-api";
 import {User} from "@/models/user";
 import {DmcAuditSentOa} from "@/models/dmc-audit-sent-oa";
@@ -369,8 +369,8 @@ interface CollapseGroup {
 }
 
 interface DepRuleRel {
-  dep: Department
-  loginId: string
+  dep: Organ
+  userid: string
   remark: string
   ruleResultIds: Set<string>
 }
@@ -393,9 +393,10 @@ export default class RuleResultList extends Vue {
   sGroups: CollapseGroup[] = []
   xGroups: CollapseGroup[] = []
 
-  deps: Department[] = []
-  depsMap: Map<string, Department> = new Map<string, Department>()
-  depsNameMap: Map<string, Department> = new Map<string, Department>()
+  deps: Organ[] = []
+  depsCodeMap: Map<string, Organ> = new Map<string, Organ>()
+  depsMap: Map<string, Organ> = new Map<string, Organ>()
+  depsNameMap: Map<string, Organ> = new Map<string, Organ>()
   usersMap: Map<string, User> = new Map<string, User>()
 
   depRuleRelsMap: Map<string, DepRuleRel> = new Map<string, DepRuleRel>()
@@ -486,10 +487,11 @@ export default class RuleResultList extends Vue {
     await this.fetchData()
 
     this.deps = await getDepartments()
-    this.depsMap = new Map<string, Department>(this.deps.map(dep => [dep.orgId, dep]))
-    this.depsNameMap = new Map<string, Department>(this.deps.map(dep => [dep.orgName, dep]))
+    this.depsCodeMap = new Map<string, Organ>(this.deps.map(dep => [dep.orgcode, dep]))
+    this.depsMap = new Map<string, Organ>(this.deps.map(dep => [dep.orgid, dep]))
+    this.depsNameMap = new Map<string, Organ>(this.deps.map(dep => [dep.orgName, dep]))
     this.deps.forEach(dep => {
-      dep.users.forEach(user => this.usersMap.set(user.loginId, user))
+      dep.users.forEach(user => this.usersMap.set(user.userid, user))
     })
   }
 
@@ -525,9 +527,9 @@ export default class RuleResultList extends Vue {
       }
 
       if (wf.xsRule && wf.stdDepId) {
-        const dep = this.depsMap.get(wf.stdDepId) || this.depsNameMap.get(wf.stdDepName)
+        const dep = this.depsCodeMap.get(wf.stdDepId) || this.depsNameMap.get(wf.stdDepName)
         if (dep) {
-          this.setSendToDep(wf, [dep.orgId])
+          this.setSendToDep(wf, [dep.orgcode])
         }
       }
       return wf
@@ -592,9 +594,9 @@ export default class RuleResultList extends Vue {
     }
   }
 
-  setUniDepartment(ruleResults: DmcAuditRuleResult[], dep: Department): void {
+  setUniDepartment(ruleResults: DmcAuditRuleResult[], dep: Organ): void {
     ruleResults.forEach(rr => {
-      rr.sendToDep = [dep.orgId]
+      rr.sendToDep = [dep.orgid]
       this.depSelectChanged(rr)
     })
   }
@@ -628,7 +630,7 @@ export default class RuleResultList extends Vue {
           depRuleRel = {
             dep,
             ruleResultIds: new Set<string>([ruleResultId]),
-            loginId: user0 ? user0.loginId : '',
+            userid: user0 ? user0.userid : '',
             remark: DefaultOaRemark
           }
           this.depRuleRelsMap.set(depId, depRuleRel)
@@ -647,7 +649,7 @@ export default class RuleResultList extends Vue {
     }
     for (const drr of depRuleRels) {
       const depName = drr.dep.orgName
-      if (!drr.loginId) {
+      if (!drr.userid) {
         alert(`（${depName}）未指定人员`)
         return
       }
@@ -681,13 +683,13 @@ export default class RuleResultList extends Vue {
         }
         checkType = checkType + '跨系统校验'
       }
-      const toUser = this.usersMap.get(drr.loginId)
+      const toUser = this.usersMap.get(drr.userid)
 
       const dep = drr.dep
       const oaDep: DmcAuditSentOaDep = {
-        depId: dep.orgId,
+        depId: dep.orgid,
         depName: dep.orgName,
-        userId: drr.loginId,
+        userId: drr.userid,
         userName: toUser ? toUser.userName : '',
         remark: drr.remark,
         failedRulesCount: drr.ruleResultIds.size,

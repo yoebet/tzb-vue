@@ -1,7 +1,13 @@
 export interface User {
-  userId: number
+  id: number
+
+  userid: string
 
   loginId: string
 
   userName: string
+
+  orgid: string
+
+  orgcode: string
 }

@@ -189,6 +189,7 @@ import {DmcAuditWflowStat, DmcAuditWflowStatCodes} from "@/models/dmc-audit-wflo
 import WflowRunTableList from "@/components/WflowRunTableList.vue";
 import SentOaRecordList from "@/components/SentOaRecordList.vue";
 import {Result} from "@/models/result";
+import {getCu, getDpCu} from "@/api/user-dep-api";
 
 @Options({
   components: {
@@ -250,6 +251,11 @@ export default class WflowRunStatList extends Vue {
     // this.filter.pageSize = 2
     // this.filter.workflowName = 'eas'
     await this.fetchData()
+
+    const dcu = await getDpCu();
+    console.log(dcu)
+    const cu = await getCu();
+    console.log(cu)
   }
 
   async fetchData(): Promise<void> {

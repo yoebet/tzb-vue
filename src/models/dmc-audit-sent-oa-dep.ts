@@ -3,9 +3,9 @@ export interface DmcAuditSentOaDep {
   sentOaOid?: string
   oid?: string
 
-  depId: string
+  depId: string // orgid
   depName: string
-  userId: string // loginId
+  userId: string // userid
   userName: string
 
   checkType: string
