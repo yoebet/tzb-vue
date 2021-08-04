@@ -14,4 +14,7 @@ export interface DmcAuditSentOaDep {
   remark: string
 
   accountTime: string
+
+  requestId?: string
+  createTime?: string
 }

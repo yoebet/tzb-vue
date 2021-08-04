@@ -15,8 +15,13 @@ export async function getCu(): Promise<Organ[]> {
   return Promise.resolve(cu)
 }
 
+let organs: Organ[];
+
 export async function getDepartments(): Promise<Organ[]> {
+  if (organs) {
+    return Promise.resolve(organs)
+  }
   const response = await fetch(API_BASE_PATH + '/api/user-organs')
-  const deps: Organ[] = await response.json()
-  return Promise.resolve(deps)
+  organs = await response.json()
+  return Promise.resolve(organs)
 }

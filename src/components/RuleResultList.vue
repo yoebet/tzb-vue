@@ -707,6 +707,19 @@ export default class RuleResultList extends Vue {
     }
     // console.log(sentOa)
 
+    const cuEl = window.top.document.querySelector('#currentUser > li > div> span')
+    console.log(cuEl)
+    if (cuEl) {
+      let userName = cuEl.textContent
+      console.log(userName)
+      if (userName) {
+        userName = userName.trim()
+      }
+      if (userName) {
+        sentOa.operatorName = userName
+      }
+    }
+
     this.sendingOa = true
     const result: Result<DmcAuditSentOa> = await sendOa(sentOa.wflowRunOid, sentOa)
     this.sendingOa = false

@@ -32,10 +32,6 @@ export interface DmcAuditRuleResult {
 
   resdResultDesc: string
 
-  etlTaskId: string
-
-  objRuleId: string
-
   ruleId: string
 
   ruleName: string

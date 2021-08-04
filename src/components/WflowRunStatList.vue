@@ -252,8 +252,8 @@ export default class WflowRunStatList extends Vue {
     // this.filter.workflowName = 'eas'
     await this.fetchData()
 
-    const dcu = await getDpCu();
-    console.log(dcu)
+    await getDpCu()
+    // console.log(dcu)
     const cu = await getCu();
     console.log(cu)
   }

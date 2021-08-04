@@ -6,7 +6,7 @@ export interface DmcAuditSentOa {
 
   wflowRunOid: string
 
-  operator?: string
+  operator?: string // userinfo.userid
   operatorName?: string
   sentTime?: string
 

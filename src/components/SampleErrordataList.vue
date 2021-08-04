@@ -121,6 +121,6 @@ export default class SampleErrordataList extends Vue {
 }
 
 .errdata-table {
-  width: 90%;
+  width: 96%;
 }
 </style>
