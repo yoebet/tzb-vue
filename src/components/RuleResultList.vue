@@ -51,9 +51,10 @@
         </div>
       </template>
       <el-table
-          :data="group.tableData"
           stripe
+          :data="group.tableData"
           :cell-class-name="cellClassName"
+          @filter-change="tableFilterChange($event,group)"
           row-key="resdOid"
           style="width: 100%">
         <!--        <el-table-column
@@ -133,6 +134,35 @@
           </template>
         </el-table-column>
         <el-table-column
+            min-width="100"
+            prop="ruleFlagVal"
+            column-key="ruleFlagVal"
+            label="规则标记"
+            :filters="ruleFlagFilterOptions"
+            :filter-multiple="false"
+            :filter-method="filterHandler">
+          <template #default="scope">
+            <el-select v-model="scope.row.ruleFlagVal" placeholder="标记" v-if="scope.row.failed"
+                       @change="ruleFlagSelectChanged(scope.row)">
+              <el-option
+                  v-for="item in ruleFlagOptions"
+                  :key="item.value"
+                  :label="item.text"
+                  :value="item.value">
+              </el-option>
+            </el-select>
+          </template>
+        </el-table-column>
+        <el-table-column
+            sortable
+            :sort-method="sortByRuleFlagDate"
+            prop="ruleFlag.flagUpdatedAt"
+            label="标记日期">
+          <template #default="scope">
+            {{ ruleFlagDate(scope.row.ruleFlag) }}
+          </template>
+        </el-table-column>
+        <el-table-column
             min-width="150"
             prop="sendToDep"
             label="发送部门">
@@ -144,7 +174,7 @@
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item v-for="dep in deps" :key="dep.orgid" @click="setUniDepartment(group.tableData,dep)">
+                  <el-dropdown-item v-for="dep in deps" :key="dep.orgid" @click="setUniDepartment(group,dep)">
                     {{ dep.orgName }}
                   </el-dropdown-item>
                 </el-dropdown-menu>
@@ -177,8 +207,9 @@
         </div>
       </template>
       <el-table
-          :data="group.tableData"
           stripe
+          :data="group.tableData"
+          @filter-change="tableFilterChange($event,group)"
           :cell-class-name="cellClassName"
           row-key="resdOid"
           style="width: 100%">
@@ -234,6 +265,35 @@
           </template>
         </el-table-column>
         <el-table-column
+            min-width="100"
+            prop="ruleFlagVal"
+            column-key="ruleFlagVal"
+            label="规则标记"
+            :filters="ruleFlagFilterOptions"
+            :filter-multiple="false"
+            :filter-method="filterHandler">
+          <template #default="scope">
+            <el-select v-model="scope.row.ruleFlagVal" placeholder="标记" v-if="scope.row.failed"
+                       @change="ruleFlagSelectChanged(scope.row)">
+              <el-option
+                  v-for="item in ruleFlagOptions"
+                  :key="item.value"
+                  :label="item.text"
+                  :value="item.value">
+              </el-option>
+            </el-select>
+          </template>
+        </el-table-column>
+        <el-table-column
+            sortable
+            :sort-method="sortByRuleFlagDate"
+            prop="ruleFlag.flagUpdatedAt"
+            label="标记日期">
+          <template #default="scope">
+            {{ ruleFlagDate(scope.row.ruleFlag) }}
+          </template>
+        </el-table-column>
+        <el-table-column
             min-width="150"
             prop="sendToDep"
             label="发送部门">
@@ -245,7 +305,7 @@
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item v-for="dep in deps" :key="dep.orgid" @click="setUniDepartment(group.tableData,dep)">
+                  <el-dropdown-item v-for="dep in deps" :key="dep.orgid" @click="setUniDepartment(group,dep)">
                     {{ dep.orgName }}
                   </el-dropdown-item>
                 </el-dropdown-menu>
@@ -356,9 +416,11 @@ import {Result} from "@/models/result";
 import SentOaRecordList from "@/components/SentOaRecordList.vue";
 import SampleErrordataList from "@/components/SampleErrordataList.vue";
 import {MetaStructField} from "@/models/meta-struct-field";
-import {DateTimeHMSFormat, DefaultOaRemark} from "@/config";
+import {DateFormat, DateTimeHMSFormat, DefaultOaRemark} from "@/config";
 import {EtlWflowRun} from "@/models/etl-wflow-run";
 import moment from "moment";
+import {removeRuleFlag, setRuleFlag} from "@/api/rule-flag-api";
+import {DmcAuditRuleFlag} from "@/models/dmc-audit-rule-flag";
 
 interface CollapseGroup {
   code: string,
@@ -366,6 +428,7 @@ interface CollapseGroup {
   failedCount: number
   accountTimes: string
   tableData: DmcAuditRuleResult[]
+  filters?: any
 }
 
 interface DepRuleRel {
@@ -392,6 +455,16 @@ export default class RuleResultList extends Vue {
   groupType: 'ds' | 'ds-table' = 'ds'
   sGroups: CollapseGroup[] = []
   xGroups: CollapseGroup[] = []
+  ruleFlagKeyValues = [
+    {value: 'Z', text: '整改中'},
+    {value: 'Q', text: '确认中'}
+  ]
+  ruleFlagOptions = [
+    {value: '', text: ''}
+  ].concat(this.ruleFlagKeyValues)
+  ruleFlagFilterOptions = [
+    {value: '', text: '（无）'}
+  ].concat(this.ruleFlagKeyValues)
 
   deps: Organ[] = []
   depsCodeMap: Map<string, Organ> = new Map<string, Organ>()
@@ -532,6 +605,12 @@ export default class RuleResultList extends Vue {
           this.setSendToDep(wf, [dep.orgcode])
         }
       }
+
+      if (wf.ruleFlag) {
+        wf.ruleFlagVal = wf.ruleFlag.flag
+      } else {
+        wf.ruleFlagVal = ''
+      }
       return wf
     })
     this.tableData = list
@@ -578,6 +657,85 @@ export default class RuleResultList extends Vue {
     return (a.stdFieldCode || '').localeCompare(b.stdFieldCode || '')
   }
 
+  sortByRuleFlag(a: DmcAuditRuleResult, b: DmcAuditRuleResult): number {
+    return (a.ruleFlagVal || '').localeCompare(b.ruleFlagVal || '')
+  }
+
+  sortByRuleFlagDate(a: DmcAuditRuleResult, b: DmcAuditRuleResult): number {
+    const ruleFlag1 = a.ruleFlag
+    const ruleFlag2 = b.ruleFlag
+    if (!ruleFlag1) {
+      return -1
+    }
+    if (!ruleFlag2) {
+      return 1
+    }
+    const date1 = ruleFlag1.flagUpdatedAt || ruleFlag1.flagAddedAt
+    const date2 = ruleFlag2.flagUpdatedAt || ruleFlag2.flagAddedAt
+    if (typeof date1 === 'number' && typeof date2 === 'number') {
+      return date1 - date2
+    }
+    if (typeof date1 === 'string' && typeof date2 === 'string') {
+      return date1.localeCompare(date2)
+    }
+    return moment(date1).isBefore(moment(date2)) ? -1 : 1
+  }
+
+  ruleFlagDate(ruleFlag: DmcAuditRuleFlag): string {
+    if (!ruleFlag) {
+      return ''
+    }
+    const date = ruleFlag.flagUpdatedAt || ruleFlag.flagAddedAt
+    if (!date) {
+      return ''
+    }
+    return moment(date).format(DateFormat)
+  }
+
+  tableFilterChange(filters: any, group: CollapseGroup): void {
+    group.filters = filters
+  }
+
+  filterHandler(value: any, row: any, column: any): boolean {
+    const property = column['property'];
+    return row[property] === value;
+  }
+
+  async ruleFlagSelectChanged(ruleResult: DmcAuditRuleResult): Promise<void> {
+    if (!ruleResult.ruleFlagVal) {
+      const result: Result<void> = await removeRuleFlag(ruleResult.ruleId)
+      if (result.code !== 0) {
+        alert(result.message)
+        return
+      }
+      ruleResult.ruleFlag = undefined
+      return
+    }
+
+    let ruleFlag = ruleResult.ruleFlag
+    if (ruleFlag) {
+      ruleFlag.flag = ruleResult.ruleFlagVal
+    } else {
+      ruleFlag = {
+        ruleId: ruleResult.ruleId,
+        flag: ruleResult.ruleFlagVal,
+        resdOid: ruleResult.resdOid,
+        resOid: ruleResult.tab.resOid
+      }
+    }
+    const result: Result<void> = await setRuleFlag(ruleFlag)
+    if (result.code !== 0) {
+      alert(result.message)
+      return
+    }
+    const now = new Date().toISOString()
+    ruleFlag.flagUpdatedAt = now
+    if (!ruleFlag.flagAddedAt) {
+      ruleFlag.flagAddedAt = now
+      ruleResult.ruleFlag = ruleFlag
+    }
+  }
+
   removeCommon(sa: string[], sb: string[]): void {
     if (!sa || !sb || sa.length === 0 || sb.length === 0) {
       return
@@ -594,8 +752,15 @@ export default class RuleResultList extends Vue {
     }
   }
 
-  setUniDepartment(ruleResults: DmcAuditRuleResult[], dep: Organ): void {
-    ruleResults.forEach(rr => {
+  setUniDepartment(group: CollapseGroup, dep: Organ): void {
+    const ruleResults: DmcAuditRuleResult[] = group.tableData
+    let filtered = ruleResults
+    const filters = group.filters
+    if (filters && filters['ruleFlagVal']) {
+      const ruleFlagVal = filters['ruleFlagVal'][0]
+      filtered = ruleResults.filter(rr => rr.ruleFlagVal === ruleFlagVal)
+    }
+    filtered.forEach(rr => {
       rr.sendToDep = [dep.orgid]
       this.depSelectChanged(rr)
     })
@@ -708,14 +873,13 @@ export default class RuleResultList extends Vue {
     // console.log(sentOa)
 
     const cuEl = window.top.document.querySelector('#currentUser > li > div> span')
-    console.log(cuEl)
     if (cuEl) {
       let userName = cuEl.textContent
-      console.log(userName)
       if (userName) {
         userName = userName.trim()
       }
       if (userName) {
+        console.log(userName)
         sentOa.operatorName = userName
       }
     }

@@ -1,8 +1,13 @@
 import {DmcAuditTabTask} from "@/models/dmc-audit-tab-task";
+import {DmcAuditRuleFlag} from "@/models/dmc-audit-rule-flag";
 
 export interface DmcAuditRuleResult {
 
   tab: DmcAuditTabTask
+
+  ruleFlagVal?: string
+
+  ruleFlag?: DmcAuditRuleFlag
 
   sendToDep?: string[]
 
