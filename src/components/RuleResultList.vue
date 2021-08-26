@@ -57,12 +57,6 @@
           @filter-change="tableFilterChange($event,group)"
           row-key="resdOid"
           style="width: 100%">
-        <!--        <el-table-column
-                    sortable
-                    prop="tab.dbResourceName"
-                    class-name="ds-name"
-                    label="数据源">
-                </el-table-column>-->
         <el-table-column
             type="index"
             align="right"
@@ -108,8 +102,8 @@
         </el-table-column>
         <el-table-column
             sortable
-            width="80"
             prop="resdResultName"
+            width="80"
             class-name="result-status"
             label="结果">
           <template #default="scope">
@@ -209,8 +203,8 @@
       <el-table
           stripe
           :data="group.tableData"
-          @filter-change="tableFilterChange($event,group)"
           :cell-class-name="cellClassName"
+          @filter-change="tableFilterChange($event,group)"
           row-key="resdOid"
           style="width: 100%">
         <el-table-column
@@ -218,12 +212,6 @@
             align="right"
             label="#">
         </el-table-column>
-        <!--        <el-table-column
-                    sortable
-                    prop="tab.dbResourceName"
-                    class-name="ds-name"
-                    label="数据源">
-                </el-table-column>-->
         <el-table-column
             sortable
             prop="tab.tabName"
@@ -597,6 +585,10 @@ export default class RuleResultList extends Vue {
       }
       if (wf.resdResultDesc) {
         wf.resdResultDesc = wf.resdResultDesc.replace('数据错误,', '数据错误，')
+        if (wf.resdResultDesc.indexOf('&') >= 0) {
+          wf.resdResultDesc = wf.resdResultDesc.replace('&lt;', '<')
+          wf.resdResultDesc = wf.resdResultDesc.replace('&gt;', '>')
+        }
       }
 
       if (wf.xsRule && wf.stdDepId) {

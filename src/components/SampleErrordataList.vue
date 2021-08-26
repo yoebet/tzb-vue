@@ -8,8 +8,8 @@
       empty-text="无数据"
       stripe
       size="medium"
-      max-height="700"
-      v-if="columns.length>1">
+      max-height="800"
+      v-if="columns.length>0">
     <el-table-column
         type="index"
         align="right"
@@ -19,8 +19,8 @@
                      :prop="col.code"
                      :key="col">
       <template #header>
-        <span v-if="col.code!==col.name">{{ col.code }}<br></span>
-        {{ col.name }}
+        {{ col.code }}
+        <template v-if="col.name"><br>{{ col.name }}</template>
       </template>
     </el-table-column>
   </el-table>
@@ -63,7 +63,6 @@ export default class SampleErrordataList extends Vue {
     }
     this.tableDataLoading = true
     const sampleData: DmcTaskResultErrordata = await getSampleErrordata(sampleErrorDataOid)
-    this.tableDataLoading = false
 
     let colCodes: string[]
     let errorDataRows: string[][]
@@ -71,10 +70,11 @@ export default class SampleErrordataList extends Vue {
       colCodes = JSON.parse(sampleData.metaInfo)
       errorDataRows = JSON.parse(sampleData.errorData)
     } catch (e) {
+      this.tableDataLoading = false
       return
     }
 
-    this.columns = colCodes.map((code: string, index: number) => ({index, code, name: code}))
+    const columns = colCodes.map((code: string, index: number) => ({index, code, name: ''}))
     this.dataRows = errorDataRows.map((cells: string[], index: number) => {
       const row: DataRow = {}
       cells.forEach((cellValue: string, index: number) => {
@@ -87,24 +87,31 @@ export default class SampleErrordataList extends Vue {
     const structId = this.ruleResult.tab.structId
     let fieldsMap: Map<string, MetaStructField> | undefined = this.structsMap.get(structId)
     if (!fieldsMap) {
-      let fields: MetaStructField[] = await getStructFields(structId)
-      if (!fields) {
-        fields = []
+      try {
+        let fields: MetaStructField[] = await getStructFields(structId)
+        if (!fields) {
+          fields = []
+        }
+        fieldsMap = new Map<string, MetaStructField>()
+        for (const field of fields) {
+          fieldsMap.set(field.fieldCode, field)
+        }
+        this.structsMap.set(structId, fieldsMap)
+      } catch (e) {
+        this.tableDataLoading = false
+        return
       }
-      fieldsMap = new Map<string, MetaStructField>()
-      for (const field of fields) {
-        fieldsMap.set(field.fieldCode, field)
-      }
-      this.structsMap.set(structId, fieldsMap)
     }
 
-    this.columns.forEach(column => {
+    columns.forEach(column => {
       const field: MetaStructField | undefined = (fieldsMap as Map<string, MetaStructField>).get(column.code)
       if (field) {
         column.name = field.fieldName
       }
     })
 
+    this.columns = columns
+    this.tableDataLoading = false
   }
 
 
