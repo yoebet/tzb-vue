@@ -10,5 +10,15 @@ export interface Organ {
 
   orgcode: string
 
+  superid: string
+
   users: User[]
+
+  // ---
+
+  label?: string
+
+  children?: Organ[]
+
+  usersCount?: number
 }

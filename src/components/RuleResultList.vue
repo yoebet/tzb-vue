@@ -162,28 +162,56 @@
             label="发送部门">
           <template #header>
             发送部门&nbsp;
-            <el-dropdown>
-              <span class="uddt">
-                全部设置为<i class="el-icon-arrow-down el-icon--right"></i>
-              </span>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item v-for="dep in deps" :key="dep.orgid" @click="setUniDepartment(group,dep)">
-                    {{ dep.orgName }}
-                  </el-dropdown-item>
-                </el-dropdown-menu>
+            <el-popover
+                :width="300"
+                trigger="click"
+            >
+              <template #reference>
+                <span class="uddt">
+                  全部设置为<i class="el-icon-arrow-down el-icon--right"></i>
+                </span>
+                <!--                <el-button size="small">全部设置为</el-button>-->
               </template>
-            </el-dropdown>
+              <el-input
+                  size="small"
+                  placeholder=""
+                  clearable
+                  v-model="organTreeFilterText1">
+              </el-input>
+              <el-tree :data="organTreeData"
+                       :props="organTreeProps"
+                       :filter-node-method="filterNode"
+                       @node-click="setUniDepartment(group,$event)"
+                       class="filter-tree"
+                       ref="treeH1"></el-tree>
+            </el-popover>
+            <!--            <el-dropdown>
+                          <span class="uddt">
+                            全部设置为<i class="el-icon-arrow-down el-icon&#45;&#45;right"></i>
+                          </span>
+                          <template #dropdown>
+                            <el-dropdown-menu>
+                              <el-dropdown-item v-for="dep in deps" :key="dep.orgid" @click="setUniDepartment(group,dep)">
+                                {{ dep.orgName }}
+                              </el-dropdown-item>
+                            </el-dropdown-menu>
+                          </template>
+                        </el-dropdown>-->
           </template>
           <template #default="scope">
-            <el-select v-model="scope.row.sendToDep" multiple placeholder="部门" v-if="scope.row.failed"
+            <el-select v-model="scope.row.sendToDep" multiple filterable placeholder="部门" v-if="scope.row.failed"
                        @change="depSelectChanged(scope.row)">
-              <el-option
-                  v-for="item in deps"
-                  :key="item.orgid"
-                  :label="item.orgName"
-                  :value="item.orgid">
-              </el-option>
+              <el-option-group
+                  v-for="group in organGroups"
+                  :key="group.label"
+                  :label="group.label">
+                <el-option
+                    v-for="item in group.organs"
+                    :key="item.orgid"
+                    :label="item.orgName"
+                    :value="item.orgid">
+                </el-option>
+              </el-option-group>
             </el-select>
           </template>
         </el-table-column>
@@ -287,28 +315,56 @@
             label="发送部门">
           <template #header>
             发送部门&nbsp;
-            <el-dropdown>
-              <span class="uddt">
-                全部设置为<i class="el-icon-arrow-down el-icon--right"></i>
-              </span>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item v-for="dep in deps" :key="dep.orgid" @click="setUniDepartment(group,dep)">
-                    {{ dep.orgName }}
-                  </el-dropdown-item>
-                </el-dropdown-menu>
+            <el-popover
+                :width="300"
+                trigger="click"
+            >
+              <template #reference>
+                <span class="uddt">
+                  全部设置为<i class="el-icon-arrow-down el-icon--right"></i>
+                </span>
+                <!--                <el-button size="small">全部设置为</el-button>-->
               </template>
-            </el-dropdown>
+              <el-input
+                  size="small"
+                  placeholder=""
+                  clearable
+                  v-model="organTreeFilterText2">
+              </el-input>
+              <el-tree :data="organTreeData"
+                       :props="organTreeProps"
+                       :filter-node-method="filterNode"
+                       @node-click="setUniDepartment(group,$event)"
+                       class="filter-tree"
+                       ref="treeH2"></el-tree>
+            </el-popover>
+            <!-- <el-dropdown>
+                          <span class="uddt">
+                            全部设置为<i class="el-icon-arrow-down el-icon&#45;&#45;right"></i>
+                          </span>
+                          <template #dropdown>
+                            <el-dropdown-menu>
+                              <el-dropdown-item v-for="dep in deps" :key="dep.orgid" @click="setUniDepartment(group,dep)">
+                                {{ dep.orgName }}
+                              </el-dropdown-item>
+                            </el-dropdown-menu>
+                          </template>
+                        </el-dropdown>-->
           </template>
           <template #default="scope">
-            <el-select v-model="scope.row.sendToDep" multiple placeholder="部门" v-if="scope.row.failed"
+            <el-select v-model="scope.row.sendToDep" multiple filterable placeholder="部门" v-if="scope.row.failed"
                        @change="depSelectChanged(scope.row)">
-              <el-option
-                  v-for="item in deps"
-                  :key="item.orgid"
-                  :label="item.orgName"
-                  :value="item.orgid">
-              </el-option>
+              <el-option-group
+                  v-for="group in organGroups"
+                  :key="group.label"
+                  :label="group.label">
+                <el-option
+                    v-for="item in group.organs"
+                    :key="item.orgid"
+                    :label="item.orgName"
+                    :value="item.orgid">
+                </el-option>
+              </el-option-group>
             </el-select>
           </template>
         </el-table-column>
@@ -426,8 +482,22 @@ interface DepRuleRel {
   ruleResultIds: Set<string>
 }
 
+interface OrganGroup {
+  label: string
+  topOrgan: Organ
+  organs: Organ[]
+}
+
 
 @Options({
+  watch: {
+    organTreeFilterText1(val: string) {
+      (this.$refs.treeH1 as any).filter(val);
+    },
+    organTreeFilterText2(val: string) {
+      (this.$refs.treeH2 as any).filter(val);
+    },
+  },
   components: {
     SentOaRecordList,
     SampleErrordataList
@@ -459,6 +529,7 @@ export default class RuleResultList extends Vue {
   depsMap: Map<string, Organ> = new Map<string, Organ>()
   depsNameMap: Map<string, Organ> = new Map<string, Organ>()
   usersMap: Map<string, User> = new Map<string, User>()
+  organGroups: OrganGroup[] = []
 
   depRuleRelsMap: Map<string, DepRuleRel> = new Map<string, DepRuleRel>()
   depRuleRels: DepRuleRel[] = []
@@ -470,6 +541,18 @@ export default class RuleResultList extends Vue {
   private runOid = ''
   private collapseNames: string[] | null = null
   private resdResultStatus = -2
+  organTreeData: Organ[] = []
+  organTreeProps = {
+    children: 'children',
+    label: 'label'
+  }
+  organTreeFilterText1 = ''
+  organTreeFilterText2 = ''
+
+  filterNode = (value: string, data: Organ): boolean => {
+    if (!value) return true;
+    return data.label?.indexOf(value) !== -1;
+  }
 
   groupRules(ruleResults: DmcAuditRuleResult[],
              collapseNamePrefix: string,
@@ -547,13 +630,60 @@ export default class RuleResultList extends Vue {
 
     await this.fetchData()
 
-    this.deps = await getDepartments()
-    this.depsCodeMap = new Map<string, Organ>(this.deps.map(dep => [dep.orgcode, dep]))
-    this.depsMap = new Map<string, Organ>(this.deps.map(dep => [dep.orgid, dep]))
-    this.depsNameMap = new Map<string, Organ>(this.deps.map(dep => [dep.orgName, dep]))
-    this.deps.forEach(dep => {
+    await this.setupOrganData()
+  }
+
+  async setupOrganData() {
+    const deps: Organ[] = await getDepartments()
+    this.depsCodeMap = new Map<string, Organ>(deps.map(dep => [dep.orgcode, dep]))
+    this.depsMap = new Map<string, Organ>(deps.map(dep => [dep.orgid, dep]))
+    this.depsNameMap = new Map<string, Organ>(deps.map(dep => [dep.orgName, dep]))
+
+    const topOrgans: Organ[] = []
+
+    deps.forEach(dep => {
       dep.users.forEach(user => this.usersMap.set(user.userid, user))
+      dep.usersCount = dep.users.length
+      dep.label = `${dep.orgName}(${dep.usersCount}人)`
+      const parent = this.depsMap.get(dep.superid)
+      if (parent) {
+        if (!parent.children) {
+          parent.children = []
+        }
+        parent.children.push(dep)
+      } else {
+        topOrgans.push(dep)
+      }
     })
+
+    this.organTreeData = topOrgans
+
+    let collect = (node: Organ, holder: Organ[]): void => {
+      holder.push(node)
+      if (node.children) {
+        for (const child of node.children) {
+          collect(child, holder)
+        }
+      }
+    }
+
+    const organGroups: OrganGroup[] = []
+
+    const sorted: Organ[] = []
+    for (const org of topOrgans) {
+      const group: OrganGroup = {
+        label: org.orgName,
+        topOrgan: org,
+        organs: []
+      }
+      collect(org, group.organs)
+      organGroups.push(group)
+
+      sorted.push(...group.organs)
+    }
+
+    this.deps = sorted
+    this.organGroups = organGroups
   }
 
   async fetchData(): Promise<void> {
@@ -1025,6 +1155,10 @@ export default class RuleResultList extends Vue {
 
 .result-status-4 {
   color: rgba(255, 0, 0, 0.6);
+}
+
+.filter-tree {
+  margin-top: 1em;
 }
 
 
