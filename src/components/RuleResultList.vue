@@ -180,7 +180,7 @@
               </el-input>
               <el-tree :data="organTreeData"
                        :props="organTreeProps"
-                       :filter-node-method="filterNode"
+                       :filter-node-method="filterTreeNode"
                        @node-click="setUniDepartment(group,$event)"
                        class="filter-tree"
                        ref="treeH1"></el-tree>
@@ -199,16 +199,22 @@
                         </el-dropdown>-->
           </template>
           <template #default="scope">
-            <el-select v-model="scope.row.sendToDep" multiple filterable placeholder="部门" v-if="scope.row.failed"
-                       @change="depSelectChanged(scope.row)">
+            <el-select v-model="scope.row.sendToDep"
+                       multiple
+                       filterable
+                       placeholder="部门"
+                       :filter-method="filterSelectNode1"
+                       @change="depSelectChanged(scope.row)"
+                       @blur="organSelectBlur1"
+                       v-if="scope.row.failed">
               <el-option-group
-                  v-for="group in organGroups"
+                  v-for="group in filteredOrganGroups1"
                   :key="group.label"
                   :label="group.label">
                 <el-option
                     v-for="item in group.organs"
                     :key="item.orgid"
-                    :label="item.orgName"
+                    :label="item.indentLabel"
                     :value="item.orgid">
                 </el-option>
               </el-option-group>
@@ -333,7 +339,7 @@
               </el-input>
               <el-tree :data="organTreeData"
                        :props="organTreeProps"
-                       :filter-node-method="filterNode"
+                       :filter-node-method="filterTreeNode"
                        @node-click="setUniDepartment(group,$event)"
                        class="filter-tree"
                        ref="treeH2"></el-tree>
@@ -352,16 +358,22 @@
                         </el-dropdown>-->
           </template>
           <template #default="scope">
-            <el-select v-model="scope.row.sendToDep" multiple filterable placeholder="部门" v-if="scope.row.failed"
-                       @change="depSelectChanged(scope.row)">
+            <el-select v-model="scope.row.sendToDep"
+                       multiple
+                       filterable
+                       placeholder="部门"
+                       :filter-method="filterSelectNode2"
+                       @change="depSelectChanged(scope.row)"
+                       @blur="organSelectBlur2"
+                       v-if="scope.row.failed">
               <el-option-group
-                  v-for="group in organGroups"
+                  v-for="group in filteredOrganGroups2"
                   :key="group.label"
                   :label="group.label">
                 <el-option
                     v-for="item in group.organs"
                     :key="item.orgid"
-                    :label="item.orgName"
+                    :label="item.indentLabel"
                     :value="item.orgid">
                 </el-option>
               </el-option-group>
@@ -530,6 +542,8 @@ export default class RuleResultList extends Vue {
   depsNameMap: Map<string, Organ> = new Map<string, Organ>()
   usersMap: Map<string, User> = new Map<string, User>()
   organGroups: OrganGroup[] = []
+  filteredOrganGroups1: OrganGroup[] = []
+  filteredOrganGroups2: OrganGroup[] = []
 
   depRuleRelsMap: Map<string, DepRuleRel> = new Map<string, DepRuleRel>()
   depRuleRels: DepRuleRel[] = []
@@ -549,9 +563,76 @@ export default class RuleResultList extends Vue {
   organTreeFilterText1 = ''
   organTreeFilterText2 = ''
 
-  filterNode = (value: string, data: Organ): boolean => {
+  filterTreeNode = (value: string, data: Organ): boolean => {
     if (!value) return true;
     return data.label?.indexOf(value) !== -1;
+  }
+
+  filterSelectNode1 = (value: string): void => {
+    this.filteredOrganGroups1 = this.filterSelectNode(value)
+  }
+
+  filterSelectNode2 = (value: string): void => {
+    this.filteredOrganGroups2 = this.filterSelectNode(value)
+  }
+
+  organSelectBlur1(): void {
+    this.filteredOrganGroups1 = this.organGroups
+  }
+
+  organSelectBlur2(): void {
+    this.filteredOrganGroups2 = this.organGroups
+  }
+
+  filterSelectNode(value: string): OrganGroup[] {
+    const organGroups: OrganGroup[] = this.organGroups
+    if (!value) {
+      return organGroups
+    }
+
+    let deepFilter = (node: Organ): Organ | null => {
+      if (node.children && node.children.length > 0) {
+        const children = node.children.map(deepFilter)
+        if (children.includes(null)) {
+          const node1 = {...node}
+          const children2 = children.filter(child => child) as Organ[]
+          if (children2.length === 0) {
+            node1.children = undefined
+            if (node1.orgName.indexOf(value) >= 0) {
+              return node1
+            }
+            return null
+          } else {
+            node1.children = children2
+            return node1
+          }
+        } else {
+          return node
+        }
+      }
+      if (node.orgName.indexOf(value) >= 0) {
+        return node
+      }
+      return null
+    }
+
+    return organGroups.map(og => {
+      const to = deepFilter(og.topOrgan)
+      if (to) {
+        og = {...og}
+        og.topOrgan = to
+        og.organs = []
+        let collect = (node: Organ): void => {
+          og.organs.push(node)
+          if (node.children) {
+            node.children.forEach(collect)
+          }
+        }
+        collect(to)
+        return og
+      }
+      return null
+    }).filter(og => og) as OrganGroup[]
   }
 
   groupRules(ruleResults: DmcAuditRuleResult[],
@@ -652,6 +733,8 @@ export default class RuleResultList extends Vue {
         }
         parent.children.push(dep)
       } else {
+        dep.layer = 1
+        dep.indentLabel = dep.orgName
         topOrgans.push(dep)
       }
     })
@@ -661,7 +744,14 @@ export default class RuleResultList extends Vue {
     let collect = (node: Organ, holder: Organ[]): void => {
       holder.push(node)
       if (node.children) {
+        const layer = node.layer || 1
         for (const child of node.children) {
+          let indent = ''
+          for (let l = 0; l < layer; l++) {
+            indent += '    '
+          }
+          child.indentLabel = indent + child.orgName
+          child.layer = layer + 1
           collect(child, holder)
         }
       }
@@ -671,8 +761,16 @@ export default class RuleResultList extends Vue {
 
     const sorted: Organ[] = []
     for (const org of topOrgans) {
+      let label = org.orgName
+      let si = label.indexOf('(')
+      if (si === -1) {
+        si = label.indexOf('（')
+      }
+      if (si > 0) {
+        label = label.substring(0, si)
+      }
       const group: OrganGroup = {
-        label: org.orgName,
+        label,
         topOrgan: org,
         organs: []
       }
@@ -684,6 +782,8 @@ export default class RuleResultList extends Vue {
 
     this.deps = sorted
     this.organGroups = organGroups
+    this.filteredOrganGroups1 = organGroups
+    this.filteredOrganGroups2 = organGroups
   }
 
   async fetchData(): Promise<void> {

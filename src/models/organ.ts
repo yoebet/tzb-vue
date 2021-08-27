@@ -16,7 +16,11 @@ export interface Organ {
 
   // ---
 
+  layer?: number
+
   label?: string
+
+  indentLabel?: string
 
   children?: Organ[]
 
