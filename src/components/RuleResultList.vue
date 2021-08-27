@@ -205,7 +205,7 @@
                        placeholder="部门"
                        :filter-method="filterSelectNode1"
                        @change="depSelectChanged(scope.row)"
-                       @blur="organSelectBlur1"
+                       @focus="resetFilteredOrganGroups1"
                        v-if="scope.row.failed">
               <el-option-group
                   v-for="group in filteredOrganGroups1"
@@ -364,7 +364,7 @@
                        placeholder="部门"
                        :filter-method="filterSelectNode2"
                        @change="depSelectChanged(scope.row)"
-                       @blur="organSelectBlur2"
+                       @focus="resetFilteredOrganGroups2"
                        v-if="scope.row.failed">
               <el-option-group
                   v-for="group in filteredOrganGroups2"
@@ -576,11 +576,11 @@ export default class RuleResultList extends Vue {
     this.filteredOrganGroups2 = this.filterSelectNode(value)
   }
 
-  organSelectBlur1(): void {
+  resetFilteredOrganGroups1(): void {
     this.filteredOrganGroups1 = this.organGroups
   }
 
-  organSelectBlur2(): void {
+  resetFilteredOrganGroups2(): void {
     this.filteredOrganGroups2 = this.organGroups
   }
 
