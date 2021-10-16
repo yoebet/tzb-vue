@@ -516,7 +516,7 @@ interface OrganGroup {
   }
 })
 export default class RuleResultList extends Vue {
-  etlWflowRun: EtlWflowRun | undefined
+  etlWflowRun: EtlWflowRun | null = null
   sendingOa = false
   allRuleData: DmcAuditRuleResult[] | null = null
   errorRuleData: DmcAuditRuleResult[] | null = null
@@ -821,7 +821,7 @@ export default class RuleResultList extends Vue {
         }
       }
 
-      if (wf.xsRule && wf.stdDepId) {
+      if (!wf.xsRule && wf.stdDepId) {
         const dep = this.depsCodeMap.get(wf.stdDepId) || this.depsNameMap.get(wf.stdDepName)
         if (dep) {
           this.setSendToDep(wf, [dep.orgcode])
