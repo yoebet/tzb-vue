@@ -1,23 +1,25 @@
 <template>
-  <el-page-header @back="goback" class="page-header">
-    <template #content>
-      <div class="page-header-content" v-if="etlWflowRun">
-        <span class="page-title">稽核错误数据</span>
-        &nbsp;&nbsp;
-        开始执行时间：<span class="flow-prop-value">{{ etlWflowRun.startTimeLabel }}</span>
-      </div>
-    </template>
-  </el-page-header>
+  <el-form :inline="true" class="filter-form">
+    <el-form-item label="数据日期">
+      <el-date-picker
+          v-model="filter.dataDate"
+          type="date"
+          placeholder=""
+          :shortcuts="dateShortcuts"
+          :format="dateFormat"
+          :value-format="dateFormat"
+          class="date-field"
+      >
+      </el-date-picker>
+    </el-form-item>
+    <el-form-item>
+      <el-button type="primary" @click="fetchData">查询</el-button>
+    </el-form-item>
+  </el-form>
 
   <div class="flex-bar">
-    <el-form :inline="true" class="filter-form">
-      <el-form-item label="规则显示">
-        <el-radio-group v-model="showAllRules" @change="filterChange">
-          <el-radio :label="true">全部规则</el-radio>
-          <el-radio :label="false">仅错误规则</el-radio>
-        </el-radio-group>
-      </el-form-item>
-    </el-form>
+    数据日期<span class="data-date">{{ dataDate }}</span>&nbsp;&nbsp;&nbsp;&nbsp;
+    稽核日期<span class="exec-date">{{ execDate }}</span>
     <div class="spacer"></div>
     <div>
       <el-button type="text" @click="collapseNames=[]">
@@ -29,13 +31,11 @@
 
 
   <el-collapse v-model="collapseNames" :accordion="false" class="rules-accordions">
-    <el-collapse-item :name="'s-'+group.code" v-for="group in sGroups" :key="group.code">
+    <el-collapse-item :name="group.code" v-for="group in sGroups" :key="group.code">
       <template #title>
         <div class="accordion-title">
-          <span class="collapse-group-name1">{{ group.name }}</span>
-          <span class="collapse-group-account-times">&nbsp;&nbsp;{{ group.accountTimes }}</span>
-          &nbsp;（<span class="failed-rules-count">{{ group.failedCount }}</span>
-          <span class="rules-count" v-if="showAllRules"> / {{ group.tableData.length }}</span>）
+          <span class="table-name">{{ group.name }}</span>
+          &nbsp;（<span class="failed-rules-count">{{ group.failedCount }}</span>）
         </div>
       </template>
       <el-table
@@ -52,15 +52,9 @@
         </el-table-column>
         <el-table-column
             sortable
-            prop="tab.tabName"
-            class-name="tab-name"
-            label="表名">
-        </el-table-column>
-        <el-table-column
-            sortable
             prop="ruleName"
             class-name="rule-name"
-            min-width="150"
+            min-width="200"
             label="规则名">
         </el-table-column>
         <el-table-column
@@ -73,34 +67,7 @@
           </template>
         </el-table-column>
         <el-table-column
-            sortable
-            :sort-method="sortByStdFieldCode"
-            width="160"
-            label="标准字段">
-          <template #default="scope">
-            {{ scope.row.stdFieldCode }} <br>
-            {{ scope.row.stdFieldName }}
-          </template>
-        </el-table-column>
-        <el-table-column
-            sortable
-            prop="stdDepName"
-            label="管理部门">
-        </el-table-column>
-        <el-table-column
-            sortable
-            prop="resdResultName"
-            width="80"
-            class-name="result-status"
-            label="结果">
-          <template #default="scope">
-            <span :class="'result-status-'+scope.row.resdResultStatus+ ' run-status-'+scope.row.resdExecStatus">
-              {{ scope.row.resdResultName }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column
-            min-width="200"
+            min-width="250"
             prop="resdResultDesc"
             label="错误信息">
         </el-table-column>
@@ -130,20 +97,18 @@
 
 <script lang="ts">
 import {Options, Vue} from "vue-class-component";
-import {getAuditRuleResults, getWflowRunByOid} from "@/api/etl-wflow-run-api";
-import {DmcAuditRuleResult, DmcAuditRuleResultCodes as Codes} from "@/models/dmc-audit-rule-result";
+import {getAuditRuleResults} from "@/api/etl-wflow-run-api";
+import {DmcAuditRuleResult} from "@/models/dmc-audit-rule-result";
 import SentOaRecordList from "@/components/SentOaRecordList.vue";
 import SampleErrordataList from "@/components/SampleErrordataList.vue";
 import {MetaStructField} from "@/models/meta-struct-field";
-import {DateFormat, DateTimeHMSFormat} from "@/config";
-import {EtlWflowRun} from "@/models/etl-wflow-run";
+import {DateFormat, DateShortcuts} from "@/config";
 import moment from "moment";
 
 interface CollapseGroup {
   code: string,
   name: string,
   failedCount: number
-  accountTimes: string
   tableData: DmcAuditRuleResult[]
   filters?: any
 }
@@ -157,23 +122,22 @@ interface CollapseGroup {
   }
 })
 export default class DailyErrorData extends Vue {
-  etlWflowRun: EtlWflowRun | null = null
-  allRuleData: DmcAuditRuleResult[] | null = null
+  dateFormat = DateFormat
+  dateShortcuts = DateShortcuts
   errorRuleData: DmcAuditRuleResult[] | null = null
-  errorRuleDataMap: Map<string, DmcAuditRuleResult> = new Map<string, DmcAuditRuleResult>()
-  showAllRules = false
   sGroups: CollapseGroup[] = []
+  filter: any = {}
 
   // structId -> (fieldCode -> field)
   structsMap: Map<string, (Map<string, MetaStructField>)> = new Map<string, Map<string, MetaStructField>>()
 
   tableDataLoading = false
-  private runOid = ''
   private collapseNames: string[] | null = null
-  private resdResultStatus = -2
+
+  dataDate: string | null = null
+  execDate: string | null = null
 
   groupRules(ruleResults: DmcAuditRuleResult[],
-             collapseNamePrefix: string,
              pushCollapseName: boolean): CollapseGroup[] {
 
     const groupsMap = new Map<string, DmcAuditRuleResult[]>()
@@ -190,12 +154,11 @@ export default class DailyErrorData extends Vue {
     const groups: CollapseGroup[] = []
     for (const [code, list] of Array.from(groupsMap)) {
       const tab = list[0].tab
-      const accountTimes = Array.from(new Set<string>(list.map(rr => rr.tab.accountTime).filter(at => at))).join(',')
-      const failedCount = list.filter(rr => rr.failed).length
-      groups.push({code, name: tab.tabName, failedCount, accountTimes, tableData: list})
+      const failedCount = list.length
+      groups.push({code, name: tab.tabName, failedCount, tableData: list})
 
       if (pushCollapseName && this.collapseNames) {
-        this.collapseNames.push(collapseNamePrefix + code)
+        this.collapseNames.push(code)
       }
     }
 
@@ -214,7 +177,7 @@ export default class DailyErrorData extends Vue {
     if (pushCollapseName) {
       this.collapseNames = []
     }
-    this.sGroups = this.groupRules(sTableData, 's-', pushCollapseName)
+    this.sGroups = this.groupRules(sTableData, pushCollapseName)
 
     this.tableDataLoading = false
   }
@@ -224,49 +187,20 @@ export default class DailyErrorData extends Vue {
   }
 
   async created(): Promise<void> {
-    if (this.$route.params.runOid) {
-      this.runOid = this.$route.params.runOid as string
-    }
-    if (!this.runOid) {
-      return
-    }
-    const run: EtlWflowRun = await getWflowRunByOid(this.runOid)
-    if (run.startTime) {
-      const st = moment(+run.startTime)
-      run.startTimeLabel = st.format(DateTimeHMSFormat)
-    }
-    this.etlWflowRun = run
-
+    this.filter.dataDate = moment().subtract(1, 'day').format(this.dateFormat)
     await this.fetchData()
   }
 
   async fetchData(): Promise<void> {
     this.tableDataLoading = true
-    let list: DmcAuditRuleResult[] = await getAuditRuleResults(this.runOid,
-        this.showAllRules ? null : this.resdResultStatus)
+    const runOid = 'd99e2113b12741fa935be117421e2e5c'
+    let list: DmcAuditRuleResult[] = await getAuditRuleResults(runOid, -2)
     if (!list) {
       this.tableDataLoading = false
       return
     }
 
     list = list.map(wf => {
-      wf.failed = wf.resdExecStatus === 4 || wf.resdResultStatus !== 1
-      if (wf.failed) {
-        const cur = this.errorRuleDataMap.get(wf.resdOid)
-        if (cur) {
-          return cur
-        }
-        this.errorRuleDataMap.set(wf.resdOid, wf)
-      }
-      wf.resdResultStatusName = Codes.ResultStatusNames['s' + wf.resdResultStatus]
-      wf.resdExecStatusName = Codes.ExecStatusNames['s' + wf.resdExecStatus]
-      wf.resdResultName = wf.resdResultStatusName
-      if (!wf.resdResultName && wf.resdExecStatus === 4) {
-        wf.resdResultName = '执行错误'
-      }
-      if (wf.resdExecStatus === 4) {
-        wf.resdResultDesc = ''
-      }
       if (wf.resdResultDesc) {
         wf.resdResultDesc = wf.resdResultDesc.replace('数据错误,', '数据错误，')
         if (wf.resdResultDesc.indexOf('&') >= 0) {
@@ -275,20 +209,15 @@ export default class DailyErrorData extends Vue {
         }
       }
 
-      if (wf.ruleFlag) {
-        wf.ruleFlagVal = wf.ruleFlag.flag
-      } else {
-        wf.ruleFlagVal = ''
-      }
       return wf
     })
     this.tableData = list
 
-    if (this.showAllRules) {
-      this.allRuleData = list
-    } else {
-      this.errorRuleData = list
-    }
+    this.errorRuleData = list
+
+
+    this.dataDate = this.filter.dataDate
+    this.execDate = moment(this.dataDate).add(1, 'day').format(this.dateFormat)
   }
 
   cellClassName({row, column}: { row: DmcAuditRuleResult, column: any }): string {
@@ -298,41 +227,13 @@ export default class DailyErrorData extends Vue {
     return ''
   }
 
-  async filterChange(vv: any): Promise<void> {
-    const showAll = this.showAllRules
-    if (showAll) {
-      if (this.allRuleData) {
-        this.tableData = this.allRuleData
-      } else {
-        await this.fetchData()
-      }
-    } else {
-      if (this.errorRuleData) {
-        this.tableData = this.errorRuleData
-      } else if (this.allRuleData) {
-        this.errorRuleData = this.allRuleData.filter(rr => rr.failed)
-        this.tableData = this.allRuleData
-      } else {
-        await this.fetchData()
-      }
-    }
-  }
-
   sortByFieldCode(a: DmcAuditRuleResult, b: DmcAuditRuleResult): number {
     return (a.fieldCode || '').localeCompare(b.fieldCode || '')
-  }
-
-  sortByStdFieldCode(a: DmcAuditRuleResult, b: DmcAuditRuleResult): number {
-    return (a.stdFieldCode || '').localeCompare(b.stdFieldCode || '')
   }
 
 
   tableFilterChange(filters: any, group: CollapseGroup): void {
     group.filters = filters
-  }
-
-  goback(): void {
-    window.history.back()
   }
 
 }
@@ -363,6 +264,7 @@ export default class DailyErrorData extends Vue {
 .flex-bar {
   display: flex;
   padding-right: 8px;
+  align-items: center;
 }
 
 .spacer {
@@ -381,8 +283,13 @@ export default class DailyErrorData extends Vue {
   cursor: pointer;
 }
 
-.collapse-group-name1 {
+.table-name {
   color: darkred;
+}
+
+.data-date, .exec-date {
+  color: teal;
+  margin-left: 16px;
 }
 
 .failed-rules-count {
@@ -391,22 +298,6 @@ export default class DailyErrorData extends Vue {
 
 .rules-count {
   color: #404040;
-}
-
-.run-status-3 {
-  color: green;
-}
-
-.run-status-4 {
-  color: coral;
-}
-
-.result-status-1 {
-  color: green;
-}
-
-.result-status-4 {
-  color: rgba(255, 0, 0, 0.6);
 }
 
 

@@ -199,6 +199,7 @@ import {getCu, getDpCu} from "@/api/user-dep-api";
 })
 export default class WflowRunStatList extends Vue {
   dateFormat = DateFormat
+  dateShortcuts = DateShortcuts
   tableData0: DmcAuditWflowStat[] = []
   tableDataLoading = false
   filter: EtlWflowRunFilter = new EtlWflowRunFilter()
@@ -206,8 +207,6 @@ export default class WflowRunStatList extends Vue {
     totalElements: 0,
     content: []
   }
-
-  dateShortcuts = DateShortcuts
 
   set tableData(value: DmcAuditWflowStat[]) {
     const hop = Object.prototype.hasOwnProperty
