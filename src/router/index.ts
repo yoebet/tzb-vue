@@ -1,9 +1,10 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
+import {createRouter, createWebHistory, RouteRecordRaw} from 'vue-router'
 import Home from '../views/Home.vue'
 import TaskResultList from '../components/TaskResultList.vue'
 import EtlWflowRunList from '../components/EtlWflowRunList.vue'
 import WflowRunStatList from '../components/WflowRunStatList.vue'
 import RuleResultList from '../components/RuleResultList.vue'
+import DailyErrorData from "@/components/DailyErrorData.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -36,6 +37,11 @@ const routes: Array<RouteRecordRaw> = [
     path: '/wflow-rules/:runOid',
     name: 'RuleResults',
     component: RuleResultList
+  },
+  {
+    path: '/dmc-error-data',
+    name: 'DailyErrorData',
+    component: DailyErrorData
   }
 ]
 

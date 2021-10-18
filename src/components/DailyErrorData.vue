@@ -68,7 +68,7 @@
         </el-table-column>
         <el-table-column
             min-width="250"
-            prop="resdResultDesc"
+            prop="resultDesc"
             label="错误信息">
         </el-table-column>
         <el-table-column
@@ -78,12 +78,12 @@
           <template #default="scope">
             <sample-errordata-list :rule-result="scope.row"
                                    :structs-map="structsMap"
+                                   :tabCodeStructIdMap="tabCodeStructIdMap"
                                    v-if="scope.row.sampleErrorDataOid"></sample-errordata-list>
           </template>
         </el-table-column>
         <el-table-column
             min-width="50"
-            prop="sendToDep"
             label="下载">
         </el-table-column>
       </el-table>
@@ -97,19 +97,19 @@
 
 <script lang="ts">
 import {Options, Vue} from "vue-class-component";
-import {getAuditRuleResults} from "@/api/etl-wflow-run-api";
-import {DmcAuditRuleResult} from "@/models/dmc-audit-rule-result";
 import SentOaRecordList from "@/components/SentOaRecordList.vue";
 import SampleErrordataList from "@/components/SampleErrordataList.vue";
 import {MetaStructField} from "@/models/meta-struct-field";
 import {DateFormat, DateShortcuts} from "@/config";
 import moment from "moment";
+import {getErrorRuleResults} from "@/api/task-result-api";
+import {DmcErrorRuleResult} from "@/models/dmc-error-rule-result";
 
 interface CollapseGroup {
   code: string,
   name: string,
   failedCount: number
-  tableData: DmcAuditRuleResult[]
+  tableData: DmcErrorRuleResult[]
   filters?: any
 }
 
@@ -124,12 +124,13 @@ interface CollapseGroup {
 export default class DailyErrorData extends Vue {
   dateFormat = DateFormat
   dateShortcuts = DateShortcuts
-  errorRuleData: DmcAuditRuleResult[] | null = null
+  errorRuleResult: DmcErrorRuleResult[] | null = null
   sGroups: CollapseGroup[] = []
   filter: any = {}
 
   // structId -> (fieldCode -> field)
   structsMap: Map<string, (Map<string, MetaStructField>)> = new Map<string, Map<string, MetaStructField>>()
+  tabCodeStructIdMap: Map<string, string> = new Map<string, string>()
 
   tableDataLoading = false
   private collapseNames: string[] | null = null
@@ -137,12 +138,12 @@ export default class DailyErrorData extends Vue {
   dataDate: string | null = null
   execDate: string | null = null
 
-  groupRules(ruleResults: DmcAuditRuleResult[],
+  groupRules(ruleResults: DmcErrorRuleResult[],
              pushCollapseName: boolean): CollapseGroup[] {
 
-    const groupsMap = new Map<string, DmcAuditRuleResult[]>()
+    const groupsMap = new Map<string, DmcErrorRuleResult[]>()
     for (const rr of ruleResults) {
-      const code = rr.tab.tabCode
+      const code = rr.tabCode
       let list = groupsMap.get(code)
       if (!list) {
         list = []
@@ -153,9 +154,8 @@ export default class DailyErrorData extends Vue {
 
     const groups: CollapseGroup[] = []
     for (const [code, list] of Array.from(groupsMap)) {
-      const tab = list[0].tab
       const failedCount = list.length
-      groups.push({code, name: tab.tabName, failedCount, tableData: list})
+      groups.push({code, name: list[0].tabName, failedCount, tableData: list})
 
       if (pushCollapseName && this.collapseNames) {
         this.collapseNames.push(code)
@@ -165,24 +165,17 @@ export default class DailyErrorData extends Vue {
     return groups
   }
 
-  set tableData(ruleResults: DmcAuditRuleResult[]) {
-    const sTableData: DmcAuditRuleResult[] = []
-    ruleResults.forEach(wf => {
-      if (!wf.xsRule) {
-        sTableData.push(wf)
-      }
-    })
-
+  set tableData(ruleResults: DmcErrorRuleResult[]) {
     const pushCollapseName = this.collapseNames === null
     if (pushCollapseName) {
       this.collapseNames = []
     }
-    this.sGroups = this.groupRules(sTableData, pushCollapseName)
+    this.sGroups = this.groupRules(ruleResults, pushCollapseName)
 
     this.tableDataLoading = false
   }
 
-  get tableData(): DmcAuditRuleResult[] {
+  get tableData(): DmcErrorRuleResult[] {
     return []
   }
 
@@ -193,19 +186,23 @@ export default class DailyErrorData extends Vue {
 
   async fetchData(): Promise<void> {
     this.tableDataLoading = true
-    const runOid = 'd99e2113b12741fa935be117421e2e5c'
-    let list: DmcAuditRuleResult[] = await getAuditRuleResults(runOid, -2)
+
+    const dataDate = this.filter.dataDate
+    const execDate = moment(dataDate).add(1, 'day').format(this.dateFormat)
+    let list: DmcErrorRuleResult[] = await getErrorRuleResults(execDate)
     if (!list) {
       this.tableDataLoading = false
       return
     }
+    this.dataDate = dataDate
+    this.execDate = execDate
 
     list = list.map(wf => {
-      if (wf.resdResultDesc) {
-        wf.resdResultDesc = wf.resdResultDesc.replace('数据错误,', '数据错误，')
-        if (wf.resdResultDesc.indexOf('&') >= 0) {
-          wf.resdResultDesc = wf.resdResultDesc.replace('&lt;', '<')
-          wf.resdResultDesc = wf.resdResultDesc.replace('&gt;', '>')
+      if (wf.resultDesc) {
+        wf.resultDesc = wf.resultDesc.replace('数据错误,', '数据错误，')
+        if (wf.resultDesc.indexOf('&') >= 0) {
+          wf.resultDesc = wf.resultDesc.replace('&lt;', '<')
+          wf.resultDesc = wf.resultDesc.replace('&gt;', '>')
         }
       }
 
@@ -213,21 +210,17 @@ export default class DailyErrorData extends Vue {
     })
     this.tableData = list
 
-    this.errorRuleData = list
-
-
-    this.dataDate = this.filter.dataDate
-    this.execDate = moment(this.dataDate).add(1, 'day').format(this.dateFormat)
+    this.errorRuleResult = list
   }
 
-  cellClassName({row, column}: { row: DmcAuditRuleResult, column: any }): string {
+  cellClassName({row, column}: { row: DmcErrorRuleResult, column: any }): string {
     if (column.property === 'sampleErrorDataOid') {
       return row.sampleErrorDataOid ? 'expandable' : 'no-expand'
     }
     return ''
   }
 
-  sortByFieldCode(a: DmcAuditRuleResult, b: DmcAuditRuleResult): number {
+  sortByFieldCode(a: DmcErrorRuleResult, b: DmcErrorRuleResult): number {
     return (a.fieldCode || '').localeCompare(b.fieldCode || '')
   }
 

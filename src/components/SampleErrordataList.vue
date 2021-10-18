@@ -27,23 +27,24 @@
 </template>
 
 <script lang="ts">
-import {Vue, Options} from "vue-class-component";
-import {getSampleErrordata, getStructFields} from "@/api/task-result-api";
-import {ColHeader, DataRow, DmcTaskResultErrordata} from "@/models/dmc-task-result-errordata";
-import {DmcAuditRuleResult} from "@/models/dmc-audit-rule-result";
-import {MetaStructField} from "@/models/meta-struct-field";
+import {Vue, Options} from "vue-class-component"
+import {findStructId, getSampleErrordata, getStructFields} from "@/api/task-result-api"
+import {ColHeader, DataRow, DmcTaskResultErrordata} from "@/models/dmc-task-result-errordata"
+import {MetaStructField} from "@/models/meta-struct-field"
 
 
 @Options({
   props: {
     ruleResult: {sampleErrorDataOid: String},
-    structsMap: Map
+    structsMap: Map,
+    tabCodeStructIdMap: Map
   }
 })
 export default class SampleErrordataList extends Vue {
-  ruleResult!: DmcAuditRuleResult
+  ruleResult!: { sampleErrorDataOid?: string, tabCode?: string, tab?: { structId?: string } }
   // structId -> (fieldCode -> field)
   structsMap!: Map<string, (Map<string, MetaStructField>)>
+  tabCodeStructIdMap: Map<string, string> = new Map<string, string>()
 
   columns: ColHeader[] = []
   dataRows: DataRow[] = []
@@ -84,7 +85,22 @@ export default class SampleErrordataList extends Vue {
       return row
     })
 
-    const structId = this.ruleResult.tab.structId
+    let structId
+    if (this.ruleResult.tab) {
+      structId = this.ruleResult.tab.structId
+    } else if (this.ruleResult.tabCode) {
+      const tabCode = this.ruleResult.tabCode
+      structId = this.tabCodeStructIdMap.get(tabCode)
+      if (!structId) {
+        structId = await findStructId(tabCode)
+        if (structId) {
+          this.tabCodeStructIdMap.set(tabCode, structId)
+        }
+      }
+    }
+    if (!structId) {
+      return
+    }
     let fieldsMap: Map<string, MetaStructField> | undefined = this.structsMap.get(structId)
     if (!fieldsMap) {
       try {
