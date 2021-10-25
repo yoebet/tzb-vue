@@ -19,7 +19,7 @@
 
   <div class="flex-bar">
     数据日期<span class="data-date">{{ dataDate }}</span>&nbsp;&nbsp;&nbsp;&nbsp;
-    稽核日期<span class="exec-date">{{ execDate }}</span>
+    <!--    稽核日期<span class="exec-date">{{ execDate }}</span>-->
     <div class="spacer"></div>
     <div>
       <el-button type="text" @click="collapseNames=[]">
@@ -72,9 +72,10 @@
             label="错误信息">
         </el-table-column>
         <el-table-column
+            min-width="50"
             type="expand"
             prop="sampleErrorDataOid"
-            label="数据">
+            label="样例">
           <template #default="scope">
             <sample-errordata-list :rule-result="scope.row"
                                    :structs-map="structsMap"
@@ -84,7 +85,26 @@
         </el-table-column>
         <el-table-column
             min-width="50"
+            sortable
+            prop="resultDataFile.dataRowCount"
+            label="总行数"
+            align="right">
+        </el-table-column>
+        <el-table-column
+            min-width="50"
+            label="下载日期">
+          <template #default="scope">
+            {{ fileDownloadDate(scope.row.resultDataFile) }}
+          </template>
+        </el-table-column>
+        <el-table-column
+            min-width="50"
             label="下载">
+          <template #default="scope">
+            <el-link :href="scope.row.resultDataFile.fileDownloadUrl" target="_blank"
+                     @click="onDownloadFile(scope.row)" v-if="scope.row.resultDataFile">下载
+            </el-link>
+          </template>
         </el-table-column>
       </el-table>
     </el-collapse-item>
@@ -102,8 +122,9 @@ import SampleErrordataList from "@/components/SampleErrordataList.vue";
 import {MetaStructField} from "@/models/meta-struct-field";
 import {DateFormat, DateShortcuts} from "@/config";
 import moment from "moment";
-import {getErrorRuleResults} from "@/api/task-result-api";
+import {getErrorRuleResultsByDataDate, setRuleFileDownloaded} from "@/api/task-result-api";
 import {DmcErrorRuleResult} from "@/models/dmc-error-rule-result";
+import {DmcRuleResultDataFile} from "@/models/dmc-rule-result-data-file";
 
 interface CollapseGroup {
   code: string,
@@ -188,14 +209,13 @@ export default class DailyErrorData extends Vue {
     this.tableDataLoading = true
 
     const dataDate = this.filter.dataDate
-    const execDate = moment(dataDate).add(1, 'day').format(this.dateFormat)
-    let list: DmcErrorRuleResult[] = await getErrorRuleResults(execDate)
+    let list: DmcErrorRuleResult[] = await getErrorRuleResultsByDataDate(dataDate)
     if (!list) {
       this.tableDataLoading = false
       return
     }
     this.dataDate = dataDate
-    this.execDate = execDate
+    // this.execDate = moment(dataDate).add(1, 'day').format(this.dateFormat)
 
     list = list.map(wf => {
       if (wf.resultDesc) {
@@ -227,6 +247,30 @@ export default class DailyErrorData extends Vue {
 
   tableFilterChange(filters: any, group: CollapseGroup): void {
     group.filters = filters
+  }
+
+  async onDownloadFile(ruleResult: DmcErrorRuleResult) {
+    const resultDataFile: DmcRuleResultDataFile | undefined = ruleResult.resultDataFile
+    if (!resultDataFile) {
+      return
+    }
+    const result = await setRuleFileDownloaded(resultDataFile)
+    if (result.code === 0) {
+      resultDataFile.downloadedAt = new Date().toISOString()
+      resultDataFile.downloaded = true
+    }
+  }
+
+
+  fileDownloadDate(resultDataFile: DmcRuleResultDataFile): string {
+    if (!resultDataFile) {
+      return ''
+    }
+    const date = resultDataFile.downloadedAt
+    if (!date) {
+      return ''
+    }
+    return moment(date).format(DateFormat)
   }
 
 }

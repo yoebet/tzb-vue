@@ -1,3 +1,5 @@
+import {DmcRuleResultDataFile} from "@/models/dmc-rule-result-data-file";
+
 export interface DmcErrorRuleResult {
 
   resOid: string
@@ -21,5 +23,7 @@ export interface DmcErrorRuleResult {
   resultDesc: string
 
   sampleErrorDataOid?: string
+
+  resultDataFile?: DmcRuleResultDataFile
 
 }
