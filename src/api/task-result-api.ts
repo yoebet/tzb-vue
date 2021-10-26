@@ -26,14 +26,14 @@ export async function getStructFields(structId: string): Promise<MetaStructField
 }
 
 export async function getErrorRuleResultsByDataDate(dataDate: string): Promise<DmcErrorRuleResult[]> {
-  dataDate = dataDate.replaceAll('-', '')
+  dataDate = dataDate.replace(/-/g, '')
   const response = await fetch(API_BASE_PATH + '/api/task-results/error-results/data-date/' + dataDate)
   const results: DmcErrorRuleResult[] = await response.json()
   return Promise.resolve(results)
 }
 
 export async function getErrorRuleResultsByExecDate(execDate: string): Promise<DmcErrorRuleResult[]> {
-  execDate = execDate.replaceAll('-', '')
+  execDate = execDate.replace(/-/g, '')
   const response = await fetch(API_BASE_PATH + '/api/task-results/error-results/exec-date/' + execDate)
   const results: DmcErrorRuleResult[] = await response.json()
   return Promise.resolve(results)

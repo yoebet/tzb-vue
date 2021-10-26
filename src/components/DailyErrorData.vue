@@ -34,8 +34,9 @@
     <el-collapse-item :name="group.code" v-for="group in sGroups" :key="group.code">
       <template #title>
         <div class="accordion-title">
+          <span class="table-code">{{ group.code }}</span>&nbsp;&nbsp;
           <span class="table-name">{{ group.name }}</span>
-          &nbsp;（<span class="failed-rules-count">{{ group.failedCount }}</span>）
+          &nbsp;&nbsp;（<span class="failed-rules-count">{{ group.failedCount }}</span>）
         </div>
       </template>
       <el-table
@@ -52,6 +53,13 @@
         </el-table-column>
         <el-table-column
             sortable
+            prop="ruleId"
+            class-name="rule-id"
+            min-width="50"
+            label="规则ID">
+        </el-table-column>
+        <el-table-column
+            sortable
             prop="ruleName"
             class-name="rule-name"
             min-width="200"
@@ -62,8 +70,10 @@
             :sort-method="sortByFieldCode"
             label="源字段">
           <template #default="scope">
-            {{ scope.row.fieldCode }} <br>
-            {{ scope.row.fieldName }}
+            {{ scope.row.fieldCode }}
+            <template v-if="scope.row.fieldName!==scope.row.fieldCode">
+              <br>{{ scope.row.fieldName }}
+            </template>
           </template>
         </el-table-column>
         <el-table-column
@@ -210,7 +220,7 @@ export default class DailyErrorData extends Vue {
 
     const dataDate = this.filter.dataDate
     let list: DmcErrorRuleResult[] = await getErrorRuleResultsByDataDate(dataDate)
-    if (!list) {
+    if (!list || typeof list.length === 'undefined') {
       this.tableDataLoading = false
       return
     }
@@ -318,6 +328,10 @@ export default class DailyErrorData extends Vue {
 
 .el-icon-close {
   cursor: pointer;
+}
+
+.table-code {
+  color: teal;
 }
 
 .table-name {
